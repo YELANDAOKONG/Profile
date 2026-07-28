@@ -17,6 +17,10 @@ and visibility controls.
   query contracts.
 - **FIDO/WebAuthn authentication** — passwordless login with hardware security
   keys.
+- **Hierarchical roles** — User, Administrator, and Root roles with role-based
+  administrative scope.
+- **Account restrictions** — time-limited or permanent suspension and banning,
+  with account deletion via a configurable recovery period.
 - **Two operating modes** — Personal (single owner) and Community (multi-user
   social) using the same schema.
 - **Flexible infrastructure** — configurable database (SQLite / PostgreSQL) and
@@ -48,7 +52,8 @@ Profile.sln
 ├── Profile.Infrastructure.Tests/
 ├── Profile/                 ASP.NET Core host, controllers, composition root
 ├── Profile.Worker/          Independent RabbitMQ consumer host
-└── Profile.Generator/       CLI for static JSON generation
+├── Profile.Generator/       CLI for static JSON generation
+└── Profile.Console/         Trusted CLI for administrative operations
 ```
 
 ## Getting Started
@@ -88,6 +93,26 @@ Profile supports two modes controlled by `Site.Mode`:
 
 Both modes use the same multi-user schema. Every content item has an `AuthorId`.
 Switching between modes is non-destructive.
+
+## Account Roles
+
+Three hierarchical roles control administrative scope:
+
+| Role | Scope |
+| --- | --- |
+| **User** | Regular account with no administrative privileges. |
+| **Administrator** | May manage User accounts. Cannot manage other Administrators or Roots. |
+| **Root** | May manage Users and Administrators. Cannot manage another Root. |
+
+The rank order is `User < Administrator < Root`. A higher role may only manage
+accounts with a strictly lower role. The `Profile.Console` CLI provides a
+trusted administrative surface for operations that exceed account-based
+authorization (such as suspending or banning a Root account).
+
+Account restrictions include time-limited or permanent suspension (login
+permitted, state-changing operations blocked) and banning (login blocked,
+content hidden). Account deletion uses a configurable recovery period (default
+14 days) before permanent deletion; identity records are always retained.
 
 ## Deployment Profiles
 
