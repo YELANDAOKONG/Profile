@@ -12,15 +12,16 @@ public sealed class Account
 
     public required AccountRole Role { get; init; }
 
+    
     // Account Status
     public AccountSuspension? Suspension { get; init; }
 
     public AccountBan? Ban { get; init; }
 
+    public AccountDeletion? Deletion { get; init; }
+
     
     public required DateTimeOffset CreatedAt { get; init; }
 
     public required DateTimeOffset UpdatedAt { get; init; }
-
-    public DateTimeOffset? DeletionRequestedAt { get; init; }
 }
