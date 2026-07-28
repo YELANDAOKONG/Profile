@@ -7,6 +7,14 @@ public sealed record AccountDeletion
         DateTimeOffset recoveryEndsAt,
         AccountDeletionContentPolicy contentPolicy)
     {
+        if (!Enum.IsDefined(contentPolicy))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(contentPolicy),
+                contentPolicy,
+                "Account deletion content policy is not supported.");
+        }
+
         if (recoveryEndsAt <= requestedAt)
         {
             throw new ArgumentOutOfRangeException(

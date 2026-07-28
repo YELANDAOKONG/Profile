@@ -80,6 +80,19 @@ public sealed class AccountDeletionTests
     }
 
     [Fact]
+    public void BeforeDeletionRequest_AccountCanLoginAndPerformOperations()
+    {
+        var account = CreateAccount();
+        var requestedAt = _createdAt.AddMinutes(2);
+        var beforeRequest = requestedAt.AddMinutes(-1);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
+
+        Assert.True(account.CanLoginAt(beforeRequest));
+        Assert.True(account.CanPerformOperationsAt(beforeRequest));
+        Assert.False(account.IsDeletionPendingAt(beforeRequest));
+    }
+
+    [Fact]
     public void RequestDeletion_WithNonPositiveRecoveryPeriod_ThrowsArgumentOutOfRangeException()
     {
         var account = CreateAccount();
@@ -99,6 +112,16 @@ public sealed class AccountDeletionTests
                 _createdAt,
                 _createdAt,
                 _contentPolicy));
+    }
+
+    [Fact]
+    public void AccountDeletion_WithUnsupportedContentPolicy_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new AccountDeletion(
+                _createdAt,
+                _createdAt.Add(_recoveryPeriod),
+                (AccountDeletionContentPolicy)int.MaxValue));
     }
 
     private static Account CreateAccount() =>

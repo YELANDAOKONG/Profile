@@ -82,4 +82,48 @@ public sealed class AccountTests
         Assert.Equal(memorialization, account.Memorialization);
         Assert.Null(account.Deletion);
     }
+
+    [Fact]
+    public void Reconstitution_WithStateBeforeCreation_ThrowsArgumentOutOfRangeException()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var updatedAt = createdAt.AddMinutes(1);
+        var suspension = new AccountSuspension(createdAt.AddMinutes(-1), null);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => Account.Reconstitute(
+                UserIdentity.New(),
+                new StringIdentity("account.name"),
+                new AccountEmail(new EmailAddress("user@example.com"), null),
+                AccountRole.User,
+                createdAt,
+                updatedAt,
+                suspension,
+                null,
+                null,
+                null));
+    }
+
+    [Fact]
+    public void Reconstitution_WithEmailVerifiedAfterUpdate_ThrowsArgumentOutOfRangeException()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var updatedAt = createdAt.AddMinutes(1);
+        var email = new AccountEmail(
+            new EmailAddress("user@example.com"),
+            updatedAt.AddMinutes(1));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => Account.Reconstitute(
+                UserIdentity.New(),
+                new StringIdentity("account.name"),
+                email,
+                AccountRole.User,
+                createdAt,
+                updatedAt,
+                null,
+                null,
+                null,
+                null));
+    }
 }

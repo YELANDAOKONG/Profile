@@ -39,4 +39,11 @@ public sealed class AccountEmailTests
 
         Assert.Equal(first, second);
     }
+
+    [Fact]
+    public void Constructor_WithNullAddress_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new AccountEmail(null!, null));
+    }
 }

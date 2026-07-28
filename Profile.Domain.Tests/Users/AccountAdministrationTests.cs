@@ -30,6 +30,23 @@ public sealed class AccountAdministrationTests
     }
 
     [Fact]
+    public void CanManage_BeforeTargetAccountExists_ReturnsFalse()
+    {
+        var administrator = CreateAccount(
+            AccountRole.Administrator,
+            "admin.account");
+        var targetCreatedAt = _createdAt.AddMinutes(1);
+        var target = Account.Create(
+            UserIdentity.New(),
+            new StringIdentity("user.account"),
+            new AccountEmail(new EmailAddress("user@example.com"), null),
+            AccountRole.User,
+            targetCreatedAt);
+
+        Assert.False(administrator.CanManage(target, _createdAt));
+    }
+
+    [Fact]
     public void Suspend_WithSameRoleAdministrator_ThrowsInvalidOperationException()
     {
         var administrator = CreateAccount(

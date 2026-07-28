@@ -30,13 +30,38 @@ public sealed class Account
                 "Updated time cannot be earlier than created time.");
         }
 
-        ValidateStateTimestamp(suspension?.SuspendedAt, updatedAt, nameof(suspension));
-        ValidateStateTimestamp(ban?.BannedAt, updatedAt, nameof(ban));
-        ValidateStateTimestamp(deletion?.RequestedAt, updatedAt, nameof(deletion));
+        ValidateStateTimestamp(
+            email.VerifiedAt,
+            createdAt,
+            updatedAt,
+            nameof(email));
+        ValidateStateTimestamp(
+            suspension?.SuspendedAt,
+            createdAt,
+            updatedAt,
+            nameof(suspension));
+        ValidateStateTimestamp(
+            ban?.BannedAt,
+            createdAt,
+            updatedAt,
+            nameof(ban));
+        ValidateStateTimestamp(
+            deletion?.RequestedAt,
+            createdAt,
+            updatedAt,
+            nameof(deletion));
         ValidateStateTimestamp(
             memorialization?.MemorializedAt,
+            createdAt,
             updatedAt,
             nameof(memorialization));
+
+        if (deletion is not null && memorialization is not null)
+        {
+            throw new ArgumentException(
+                "An account cannot be pending deletion and memorialized at the same time.",
+                nameof(memorialization));
+        }
 
         Id = id;
         StringId = stringId;
@@ -155,7 +180,7 @@ public sealed class Account
             return;
         }
 
-        Email = Email with { VerifiedAt = verifiedAt };
+        Email = new AccountEmail(Email.Address, verifiedAt);
         UpdatedAt = verifiedAt;
     }
 
@@ -286,6 +311,24 @@ public sealed class Account
         UpdatedAt = requestedAt;
     }
 
+    public void Memorialize(
+        Account administrator,
+        DateTimeOffset memorializedAt)
+    {
+        ArgumentNullException.ThrowIfNull(administrator);
+
+        EnsureCanBeManagedBy(administrator, memorializedAt);
+
+        if (Deletion is not null)
+        {
+            throw new InvalidOperationException(
+                "An account pending deletion cannot be memorialized.");
+        }
+
+        Memorialization = new AccountMemorialization(memorializedAt);
+        UpdatedAt = memorializedAt;
+    }
+
     public void Restore(DateTimeOffset restoredAt)
     {
         EnsureMutationTime(restoredAt);
@@ -331,21 +374,29 @@ public sealed class Account
         Deletion is { } deletion &&
         timestamp >= deletion.RecoveryEndsAt;
 
+    public bool IsMemorializedAt(DateTimeOffset timestamp) =>
+        Memorialization is { } memorialization &&
+        timestamp >= memorialization.MemorializedAt;
+
     public bool CanLoginAt(DateTimeOffset timestamp)
     {
-        if (timestamp < CreatedAt || IsBannedAt(timestamp))
+        if (timestamp < CreatedAt ||
+            IsBannedAt(timestamp) ||
+            IsMemorializedAt(timestamp))
         {
             return false;
         }
 
-        return Deletion is null || IsDeletionPendingAt(timestamp);
+        return !HasDeletionStartedAt(timestamp) ||
+            IsDeletionPendingAt(timestamp);
     }
 
     public bool CanPerformOperationsAt(DateTimeOffset timestamp) =>
         timestamp >= CreatedAt &&
-        Deletion is null &&
+        !HasDeletionStartedAt(timestamp) &&
         !IsSuspendedAt(timestamp) &&
-        !IsBannedAt(timestamp);
+        !IsBannedAt(timestamp) &&
+        !IsMemorializedAt(timestamp);
 
     public bool CanRestoreAt(DateTimeOffset timestamp) =>
         timestamp >= CreatedAt &&
@@ -357,8 +408,13 @@ public sealed class Account
         ArgumentNullException.ThrowIfNull(account);
 
         return CanPerformOperationsAt(timestamp) &&
+            timestamp >= account.CreatedAt &&
             GetRoleRank(Role) > GetRoleRank(account.Role);
     }
+
+    private bool HasDeletionStartedAt(DateTimeOffset timestamp) =>
+        Deletion is { } deletion &&
+        timestamp >= deletion.RequestedAt;
 
     private static bool IsRestrictionActiveAt(
         DateTimeOffset? expiresAt,
@@ -390,15 +446,16 @@ public sealed class Account
 
     private static void ValidateStateTimestamp(
         DateTimeOffset? stateTimestamp,
+        DateTimeOffset createdAt,
         DateTimeOffset updatedAt,
         string parameterName)
     {
-        if (stateTimestamp > updatedAt)
+        if (stateTimestamp < createdAt || stateTimestamp > updatedAt)
         {
             throw new ArgumentOutOfRangeException(
                 parameterName,
                 stateTimestamp,
-                "Account state cannot start after the account was last updated.");
+                "Account state time must be within the account lifetime.");
         }
     }
 
@@ -494,6 +551,12 @@ public sealed class Account
 
     private void EnsureMutationTime(DateTimeOffset changedAt)
     {
+        if (Memorialization is not null)
+        {
+            throw new InvalidOperationException(
+                "A memorialized account cannot be changed.");
+        }
+
         if (changedAt < UpdatedAt)
         {
             throw new ArgumentOutOfRangeException(
