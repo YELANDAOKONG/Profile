@@ -15,4 +15,41 @@
       <ProjectReference Include="..\Profile.Domain\Profile.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+      <PackageReference Include="MailKit" Version="4.17.0" />
+      <PackageReference Include="MassTransit" Version="8.3.6" />
+      <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.3.6" />
+      <PackageReference Include="MassTransit.Kafka" Version="8.3.6" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.6" />
+      <PackageReference Include="MassTransit.Redis" Version="8.3.6" />
+      <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="10.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.10">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.10" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
+      <PackageReference Include="StackExchange.Redis" Version="3.0.0" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
+      <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
+      <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.Memory" Version="2.6.0" />
+      <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" Version="2.6.0" />
+      <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="2.6.0" />
+      <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" Version="2.6.0" />
+    </ItemGroup>
+
 </Project>
