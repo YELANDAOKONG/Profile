@@ -1,6 +1,7 @@
+using Profile.Domain.Users;
 using Profile.Domain.Users.Value;
 
-namespace Profile.Domain.Tests.Users.Value;
+namespace Profile.Domain.Tests.Users;
 
 public sealed class AccountEmailTests
 {
