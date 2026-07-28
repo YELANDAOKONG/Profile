@@ -87,6 +87,69 @@ When a user is deleted, permanently retain its `UserId`, StringId identity
 records, and email identity records. Do not recycle identity data belonging to
 a deleted account.
 
+## Account Roles and Administrative Scope
+
+The system may contain multiple accounts, including multiple administrator and
+Root accounts. Every account has one current role:
+
+- `User`: a regular account.
+- `Administrator`: an account that may manage regular users.
+- `Root`: the highest administrative role.
+
+Role order is `User` < `Administrator` < `Root`. An administrator or Root
+account may perform administrative operations only on an account whose current
+role is strictly lower than its own:
+
+- An `Administrator` may manage `User` accounts, but it must not manage another
+  `Administrator` or a `Root`.
+- A `Root` may manage `User` and `Administrator` accounts, including promoting
+  an account to `Administrator` and demoting an `Administrator`.
+- A `Root` must not suspend, ban, or otherwise administratively manage another
+  `Root`.
+
+Root accounts are not intrinsically immune to suspension, banning, or account
+deletion. The account model must be able to represent those conditions even
+though the ordinary administrative hierarchy does not authorize another Root
+to impose them.
+
+## Account Restrictions and Deletion
+
+Suspension and banning are distinct account restrictions and must not be
+treated as equivalent states.
+
+A suspension:
+
+- May have an expiration time or be permanent.
+- Allows the account to log in.
+- Keeps all public content from the account visible.
+- Prevents the account from performing state-changing operations, including
+  publishing new content, while the suspension is active.
+
+A ban:
+
+- May have an expiration time or be permanent.
+- Prevents the account from logging in while the ban is active.
+- Hides all content belonging to the account while the ban is active.
+
+An expiration time of `null` means that the suspension or ban is permanent.
+When an expiration time is present, the restriction ceases to be active after
+that time.
+
+Account deletion uses a configurable recovery period whose default is 14 days:
+
+- Requesting deletion starts the recovery period; it does not immediately
+  delete the account.
+- During the recovery period, public content remains visible.
+- The account may still log in, but it may only restore the account and must
+  not perform other operations.
+- Restoring the account cancels the pending deletion.
+- After the recovery period expires, the account may be permanently deleted.
+- Permanent deletion must still retain the identity records required by the
+  Basic Account Identity rules.
+
+Login, authorization, public queries, and static generation must all enforce
+these rules. Hiding actions in the user interface is not sufficient.
+
 ## Content Model
 
 Keep distinct write models for distinct behavior:
