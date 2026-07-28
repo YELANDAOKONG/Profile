@@ -8,6 +8,8 @@ public sealed class AccountDeletionTests
     private static readonly DateTimeOffset _createdAt =
         new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private static readonly TimeSpan _recoveryPeriod = TimeSpan.FromDays(14);
+    private const AccountDeletionContentPolicy _contentPolicy =
+        AccountDeletionContentPolicy.PreserveVisibility;
 
     [Fact]
     public void RequestDeletion_WithRecoveryPeriod_AllowsOnlyRecoveryLogin()
@@ -16,10 +18,11 @@ public sealed class AccountDeletionTests
         var requestedAt = _createdAt.AddMinutes(1);
         var recoveryEndsAt = requestedAt.Add(_recoveryPeriod);
 
-        account.RequestDeletion(requestedAt, _recoveryPeriod);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
 
         Assert.Equal(requestedAt, account.Deletion?.RequestedAt);
         Assert.Equal(recoveryEndsAt, account.Deletion?.RecoveryEndsAt);
+        Assert.Equal(_contentPolicy, account.Deletion?.ContentPolicy);
         Assert.True(account.IsDeletionPendingAt(requestedAt));
         Assert.True(account.CanLoginAt(requestedAt));
         Assert.True(account.CanRestoreAt(requestedAt));
@@ -33,7 +36,7 @@ public sealed class AccountDeletionTests
         var requestedAt = _createdAt.AddMinutes(1);
         var suspendedAt = _createdAt.AddMinutes(2);
         var restoredAt = _createdAt.AddMinutes(3);
-        account.RequestDeletion(requestedAt, _recoveryPeriod);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
         account.SuspendBySystemAdministration(suspendedAt);
 
         account.Restore(restoredAt);
@@ -51,7 +54,7 @@ public sealed class AccountDeletionTests
         var requestedAt = _createdAt.AddMinutes(1);
         var bannedAt = _createdAt.AddMinutes(2);
         var restoredAt = _createdAt.AddMinutes(3);
-        account.RequestDeletion(requestedAt, _recoveryPeriod);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
         account.BanBySystemAdministration(bannedAt);
 
         Assert.False(account.CanLoginAt(restoredAt));
@@ -66,7 +69,7 @@ public sealed class AccountDeletionTests
         var account = CreateAccount();
         var requestedAt = _createdAt.AddMinutes(1);
         var recoveryEndsAt = requestedAt.Add(_recoveryPeriod);
-        account.RequestDeletion(requestedAt, _recoveryPeriod);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
 
         Assert.False(account.IsDeletionPendingAt(recoveryEndsAt));
         Assert.False(account.CanLoginAt(recoveryEndsAt));
@@ -84,14 +87,18 @@ public sealed class AccountDeletionTests
         Assert.Throws<ArgumentOutOfRangeException>(
             () => account.RequestDeletion(
                 _createdAt.AddMinutes(1),
-                TimeSpan.Zero));
+                TimeSpan.Zero,
+                _contentPolicy));
     }
 
     [Fact]
     public void AccountDeletion_WithInvalidRecoveryEnd_ThrowsArgumentOutOfRangeException()
     {
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => new AccountDeletion(_createdAt, _createdAt));
+            () => new AccountDeletion(
+                _createdAt,
+                _createdAt,
+                _contentPolicy));
     }
 
     private static Account CreateAccount() =>

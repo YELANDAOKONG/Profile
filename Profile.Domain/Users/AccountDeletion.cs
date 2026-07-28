@@ -4,7 +4,8 @@ public sealed record AccountDeletion
 {
     public AccountDeletion(
         DateTimeOffset requestedAt,
-        DateTimeOffset recoveryEndsAt)
+        DateTimeOffset recoveryEndsAt,
+        AccountDeletionContentPolicy contentPolicy)
     {
         if (recoveryEndsAt <= requestedAt)
         {
@@ -16,9 +17,12 @@ public sealed record AccountDeletion
 
         RequestedAt = requestedAt;
         RecoveryEndsAt = recoveryEndsAt;
+        ContentPolicy = contentPolicy;
     }
 
     public DateTimeOffset RequestedAt { get; }
 
     public DateTimeOffset RecoveryEndsAt { get; }
+
+    public AccountDeletionContentPolicy ContentPolicy { get; }
 }

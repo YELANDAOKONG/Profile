@@ -13,7 +13,8 @@ public sealed class Account
         DateTimeOffset updatedAt,
         AccountSuspension? suspension,
         AccountBan? ban,
-        AccountDeletion? deletion)
+        AccountDeletion? deletion,
+        AccountMemorialization? memorialization)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(stringId);
@@ -32,6 +33,10 @@ public sealed class Account
         ValidateStateTimestamp(suspension?.SuspendedAt, updatedAt, nameof(suspension));
         ValidateStateTimestamp(ban?.BannedAt, updatedAt, nameof(ban));
         ValidateStateTimestamp(deletion?.RequestedAt, updatedAt, nameof(deletion));
+        ValidateStateTimestamp(
+            memorialization?.MemorializedAt,
+            updatedAt,
+            nameof(memorialization));
 
         Id = id;
         StringId = stringId;
@@ -40,6 +45,7 @@ public sealed class Account
         Suspension = suspension;
         Ban = ban;
         Deletion = deletion;
+        Memorialization = memorialization;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
     }
@@ -58,6 +64,8 @@ public sealed class Account
     public AccountBan? Ban { get; private set; }
 
     public AccountDeletion? Deletion { get; private set; }
+
+    public AccountMemorialization? Memorialization { get; private set; }
 
     public DateTimeOffset CreatedAt { get; }
 
@@ -78,6 +86,7 @@ public sealed class Account
             createdAt,
             null,
             null,
+            null,
             null);
 
     public static Account Reconstitute(
@@ -89,7 +98,8 @@ public sealed class Account
         DateTimeOffset updatedAt,
         AccountSuspension? suspension,
         AccountBan? ban,
-        AccountDeletion? deletion) =>
+        AccountDeletion? deletion,
+        AccountMemorialization? memorialization) =>
         new(
             id,
             stringId,
@@ -99,7 +109,8 @@ public sealed class Account
             updatedAt,
             suspension,
             ban,
-            deletion);
+            deletion,
+            memorialization);
 
     public void ChangeStringId(StringIdentity stringId, DateTimeOffset changedAt)
     {
@@ -249,7 +260,8 @@ public sealed class Account
 
     public void RequestDeletion(
         DateTimeOffset requestedAt,
-        TimeSpan recoveryPeriod)
+        TimeSpan recoveryPeriod,
+        AccountDeletionContentPolicy contentPolicy)
     {
         EnsureCanPerformOperation(requestedAt);
 
@@ -269,7 +281,8 @@ public sealed class Account
 
         Deletion = new AccountDeletion(
             requestedAt,
-            requestedAt.Add(recoveryPeriod));
+            requestedAt.Add(recoveryPeriod),
+            contentPolicy);
         UpdatedAt = requestedAt;
     }
 

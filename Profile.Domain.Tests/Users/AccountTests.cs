@@ -16,7 +16,10 @@ public sealed class AccountTests
         var recoveryEndsAt = deletionRequestedAt.AddDays(14);
         var suspension = new AccountSuspension(suspendedAt, null, "Maintenance required.");
         var ban = new AccountBan(bannedAt, bannedAt.AddDays(1));
-        var deletion = new AccountDeletion(deletionRequestedAt, recoveryEndsAt);
+        var deletion = new AccountDeletion(
+            deletionRequestedAt,
+            recoveryEndsAt,
+            AccountDeletionContentPolicy.PreserveVisibility);
 
         var account = Account.Reconstitute(
             new UserIdentity(Guid.NewGuid()),
@@ -27,7 +30,8 @@ public sealed class AccountTests
             updatedAt,
             suspension,
             ban,
-            deletion);
+            deletion,
+            null);
 
         Assert.Equal(AccountRole.Root, account.Role);
         Assert.Equal(suspension, account.Suspension);
@@ -35,6 +39,7 @@ public sealed class AccountTests
         Assert.Equal("Maintenance required.", account.Suspension?.Reason);
         Assert.Null(account.Ban?.Reason);
         Assert.Equal(deletion, account.Deletion);
+        Assert.Null(account.Memorialization);
     }
 
     [Fact]
@@ -51,6 +56,30 @@ public sealed class AccountTests
 
         Assert.Null(account.Suspension);
         Assert.Null(account.Ban);
+        Assert.Null(account.Deletion);
+        Assert.Null(account.Memorialization);
+    }
+
+    [Fact]
+    public void Reconstitution_WithMemorialization_PreservesData()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var memorializedAt = createdAt.AddMinutes(1);
+        var memorialization = new AccountMemorialization(memorializedAt);
+
+        var account = Account.Reconstitute(
+            new UserIdentity(Guid.NewGuid()),
+            new StringIdentity("account.name"),
+            new AccountEmail(new EmailAddress("user@example.com"), null),
+            AccountRole.User,
+            createdAt,
+            memorializedAt,
+            null,
+            null,
+            null,
+            memorialization);
+
+        Assert.Equal(memorialization, account.Memorialization);
         Assert.Null(account.Deletion);
     }
 }
