@@ -8,7 +8,7 @@ public sealed class Account
     
     public required StringIdentity StringId { get; init; }
     
-    public required EmailAddress Email { get; init; }
+    public required AccountEmail Email { get; init; }
     
     
     
