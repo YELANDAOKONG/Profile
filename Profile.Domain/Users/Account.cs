@@ -13,5 +13,8 @@ public sealed class Account
     
     
     public DateTimeOffset CreatedAt { get; private set; }
+    
     public DateTimeOffset UpdatedAt { get; private set; }
+    
+    public DateTimeOffset? DeletedAt { get; private set; }
 }
