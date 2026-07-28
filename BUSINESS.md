@@ -57,7 +57,9 @@ Login-input parsing belongs to the HTTP/controller boundary:
 - `#<guid>` selects a `UserId`.
 - `@<stringId>` selects a `StringId`.
 - Input without a prefix defaults to `StringId`.
-- Prefixes are input syntax and must not be stored in Domain values.
+- `@` and `#` are input-only prefixes. They must never appear in Domain values,
+  DTOs, persistence, or any internal representation of `StringId` and
+  `UserId`.
 
 `StringId` has these rules:
 
