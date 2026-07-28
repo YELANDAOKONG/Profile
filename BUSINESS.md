@@ -112,9 +112,11 @@ deletion. The account model must be able to represent those conditions even
 though the ordinary administrative hierarchy does not authorize another Root
 to impose them.
 
-The trusted `Profile.Console` administrative surface may suspend or ban a Root
-account. No account, including another Root, may perform those operations
-through ordinary account-based administration.
+The trusted `Profile.Console` administrative surface operates outside the
+ordinary account-role hierarchy. It may assign or revoke any account role,
+including `Root`, and may apply or remove suspensions and bans for Root
+accounts. No account, including another Root, may perform those operations on a
+Root through ordinary account-based administration.
 
 ## Account Restrictions and Deletion
 
@@ -140,6 +142,10 @@ A ban:
 An expiration time of `null` means that the suspension or ban is permanent.
 When an expiration time is present, the restriction ceases to be active after
 that time.
+
+Suspension and ban objects represent only the account's current restriction.
+The acting administrator identity and operation history do not belong to the
+account aggregate; a separate audit or logging module may record them.
 
 Account deletion uses a configurable recovery period whose default is 14 days:
 

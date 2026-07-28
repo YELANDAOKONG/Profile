@@ -90,10 +90,10 @@ service boundary.
 - `Profile.Generator`: command-line composition root for versioned static JSON
   generation.
 - `Profile.Console`: trusted command-line administrative composition root. It
-  may perform explicitly authorized system administration, including suspending
-  and banning Root accounts. It must invoke shared Application use cases and
-  must not edit database records directly or bypass domain and authorization
-  rules.
+  may perform explicitly authorized system administration, including changing
+  roles and managing restrictions for Root accounts. It must invoke shared
+  Application use cases and must not edit database records directly or bypass
+  domain and authorization rules.
 - `Profile.Contracts`: add this project when integration-event contracts are
   introduced. Keep these contracts stable and free of infrastructure types.
 
