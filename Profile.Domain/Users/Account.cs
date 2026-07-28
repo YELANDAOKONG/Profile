@@ -215,7 +215,7 @@ public sealed class Account
         DateTimeOffset changedAt)
     {
         ValidateRole(newRole, nameof(newRole));
-        EnsureMutationTime(changedAt);
+        EnsureMutationTime(changedAt, allowMemorialized: true);
         ApplyRole(newRole, changedAt);
     }
 
@@ -267,21 +267,29 @@ public sealed class Account
         DateTimeOffset suspendedAt,
         DateTimeOffset? expiresAt = null,
         string? reason = null) =>
-        ApplySuspension(suspendedAt, expiresAt, reason);
+        ApplySuspension(
+            suspendedAt,
+            expiresAt,
+            reason,
+            allowMemorialized: true);
 
     public void RemoveSuspensionBySystemAdministration(
         DateTimeOffset removedAt) =>
-        RemoveSuspension(removedAt);
+        RemoveSuspension(removedAt, allowMemorialized: true);
 
     public void BanBySystemAdministration(
         DateTimeOffset bannedAt,
         DateTimeOffset? expiresAt = null,
         string? reason = null) =>
-        ApplyBan(bannedAt, expiresAt, reason);
+        ApplyBan(
+            bannedAt,
+            expiresAt,
+            reason,
+            allowMemorialized: true);
 
     public void RemoveBanBySystemAdministration(
         DateTimeOffset removedAt) =>
-        RemoveBan(removedAt);
+        RemoveBan(removedAt, allowMemorialized: true);
 
     public void RequestDeletion(
         DateTimeOffset requestedAt,
@@ -319,15 +327,12 @@ public sealed class Account
 
         EnsureCanBeManagedBy(administrator, memorializedAt);
 
-        if (Deletion is not null)
-        {
-            throw new InvalidOperationException(
-                "An account pending deletion cannot be memorialized.");
-        }
-
-        Memorialization = new AccountMemorialization(memorializedAt);
-        UpdatedAt = memorializedAt;
+        ApplyMemorialization(memorializedAt);
     }
+
+    public void MemorializeBySystemAdministration(
+        DateTimeOffset memorializedAt) =>
+        ApplyMemorialization(memorializedAt);
 
     public void Restore(DateTimeOffset restoredAt)
     {
@@ -473,9 +478,10 @@ public sealed class Account
     private void ApplySuspension(
         DateTimeOffset suspendedAt,
         DateTimeOffset? expiresAt,
-        string? reason)
+        string? reason,
+        bool allowMemorialized = false)
     {
-        EnsureMutationTime(suspendedAt);
+        EnsureMutationTime(suspendedAt, allowMemorialized);
 
         Suspension = new AccountSuspension(
             suspendedAt,
@@ -484,9 +490,11 @@ public sealed class Account
         UpdatedAt = suspendedAt;
     }
 
-    private void RemoveSuspension(DateTimeOffset removedAt)
+    private void RemoveSuspension(
+        DateTimeOffset removedAt,
+        bool allowMemorialized = false)
     {
-        EnsureMutationTime(removedAt);
+        EnsureMutationTime(removedAt, allowMemorialized);
 
         if (Suspension is null)
         {
@@ -500,9 +508,10 @@ public sealed class Account
     private void ApplyBan(
         DateTimeOffset bannedAt,
         DateTimeOffset? expiresAt,
-        string? reason)
+        string? reason,
+        bool allowMemorialized = false)
     {
-        EnsureMutationTime(bannedAt);
+        EnsureMutationTime(bannedAt, allowMemorialized);
 
         Ban = new AccountBan(
             bannedAt,
@@ -511,9 +520,11 @@ public sealed class Account
         UpdatedAt = bannedAt;
     }
 
-    private void RemoveBan(DateTimeOffset removedAt)
+    private void RemoveBan(
+        DateTimeOffset removedAt,
+        bool allowMemorialized = false)
     {
-        EnsureMutationTime(removedAt);
+        EnsureMutationTime(removedAt, allowMemorialized);
 
         if (Ban is null)
         {
@@ -549,9 +560,25 @@ public sealed class Account
         }
     }
 
-    private void EnsureMutationTime(DateTimeOffset changedAt)
+    private void ApplyMemorialization(DateTimeOffset memorializedAt)
     {
-        if (Memorialization is not null)
+        EnsureMutationTime(memorializedAt);
+
+        if (Deletion is not null)
+        {
+            throw new InvalidOperationException(
+                "An account pending deletion cannot be memorialized.");
+        }
+
+        Memorialization = new AccountMemorialization(memorializedAt);
+        UpdatedAt = memorializedAt;
+    }
+
+    private void EnsureMutationTime(
+        DateTimeOffset changedAt,
+        bool allowMemorialized = false)
+    {
+        if (!allowMemorialized && Memorialization is not null)
         {
             throw new InvalidOperationException(
                 "A memorialized account cannot be changed.");

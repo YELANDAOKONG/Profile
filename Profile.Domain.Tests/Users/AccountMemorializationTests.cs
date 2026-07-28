@@ -47,6 +47,25 @@ public sealed class AccountMemorializationTests
     }
 
     [Fact]
+    public void Memorialize_WhileRestricted_PreservesRestrictions()
+    {
+        var administrator = CreateAccount(
+            AccountRole.Administrator,
+            "admin.account");
+        var account = CreateAccount(AccountRole.User, "user.account");
+        var restrictedAt = _createdAt.AddMinutes(1);
+        var memorializedAt = _createdAt.AddMinutes(2);
+        account.SuspendBySystemAdministration(restrictedAt);
+        account.BanBySystemAdministration(restrictedAt);
+
+        account.Memorialize(administrator, memorializedAt);
+
+        Assert.NotNull(account.Suspension);
+        Assert.NotNull(account.Ban);
+        Assert.NotNull(account.Memorialization);
+    }
+
+    [Fact]
     public void Memorialize_WithoutHigherRole_ThrowsInvalidOperationException()
     {
         var administrator = CreateAccount(AccountRole.User, "other.user");
@@ -59,7 +78,7 @@ public sealed class AccountMemorializationTests
     }
 
     [Fact]
-    public void MemorializedAccount_CannotBeChangedBySystemAdministration()
+    public void MemorializedAccount_CannotChangeIdentity()
     {
         var administrator = CreateAccount(
             AccountRole.Administrator,
@@ -69,9 +88,32 @@ public sealed class AccountMemorializationTests
         account.Memorialize(administrator, memorializedAt);
 
         Assert.Throws<InvalidOperationException>(
-            () => account.ChangeRoleBySystemAdministration(
-                AccountRole.Administrator,
+            () => account.ChangeStringId(
+                new StringIdentity("changed.account"),
                 memorializedAt.AddMinutes(1)));
+    }
+
+    [Fact]
+    public void SystemAdministration_CanMemorializeAndManageRootAccount()
+    {
+        var account = CreateAccount(AccountRole.Root, "root.account");
+        var restrictedAt = _createdAt.AddMinutes(1);
+        var memorializedAt = _createdAt.AddMinutes(2);
+        var changedAt = _createdAt.AddMinutes(3);
+        account.SuspendBySystemAdministration(restrictedAt);
+        account.BanBySystemAdministration(restrictedAt);
+
+        account.MemorializeBySystemAdministration(memorializedAt);
+        account.RemoveSuspensionBySystemAdministration(changedAt);
+        account.RemoveBanBySystemAdministration(changedAt);
+        account.ChangeRoleBySystemAdministration(AccountRole.User, changedAt);
+
+        Assert.NotNull(account.Memorialization);
+        Assert.Null(account.Suspension);
+        Assert.Null(account.Ban);
+        Assert.Equal(AccountRole.User, account.Role);
+        Assert.False(account.CanLoginAt(changedAt));
+        Assert.False(account.CanPerformOperationsAt(changedAt));
     }
 
     [Fact]
