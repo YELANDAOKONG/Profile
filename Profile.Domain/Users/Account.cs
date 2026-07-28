@@ -8,6 +8,10 @@ public sealed class Account
     
     public required StringIdentity StringId { get; init; }
     
+    public required EmailAddress Email { get; init; }
+    
+    
+    
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 }
