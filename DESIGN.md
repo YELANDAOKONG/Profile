@@ -263,13 +263,17 @@ The body of Blog and Page is composed of an ordered collection of content
 blocks; Post, Moment, and comments do not use content blocks and instead
 use only a single `ContentBody`. Block types:
 
-- Text block: contains `ContentBody` (Markdown or plain text); single
-  block text length ≤2097152.
+- Text block: contains `ContentBody` (Markdown or plain text).
 - Media block: media library reference.
-- Blockquote (a distinct concept from "Quote Post/Quote Moment"
-  referencing Post/Moment).
-- Code block: with language identifier.
+- Blockquote: contains `ContentBody` and is a distinct concept from
+  "Quote Post/Quote Moment" referencing Post/Moment.
+- Code block: contains source text and a non-empty language identifier.
 - Divider / layout blocks.
+
+A Text block, Blockquote, or Code block may contain at most 2097152
+characters of text. A language identifier must not contain surrounding
+whitespace. These textual-block rules are shared because all three block
+types carry author-provided text with the same storage and rendering bound.
 
 A single Blog/Page may have ≤8192 blocks. Tags per content item ≤32.
 Rationale: The user decided that long-form content uses a block editor
@@ -337,8 +341,11 @@ Rules:
 ### 6.6 MediaReference
 
 Media in all aggregates uniformly references a media item in the media
-library (§16); content does not embed media files. A media reference
-contains the media library identity and necessary display metadata.
+library (§16); content does not embed media files. A `MediaReference`
+contains the media library identity and optional context-specific `AltText`.
+`AltText` belongs to the reference because the same media item may need
+different descriptions in different content. When present, it must be
+non-empty and must not contain surrounding whitespace.
 
 ## 7. Blog
 
@@ -689,7 +696,7 @@ decision:
 | Post body | 8192 characters |
 | Moment body | 2048 characters |
 | Comment body | 4096 characters |
-| Blog/Page single text block | 2097152 characters |
+| Blog/Page textual block (Text / Blockquote / Code) | 2097152 characters |
 | Blog title | 256 characters |
 | Blog summary | 2048 characters |
 | SEO title | 128 characters |
