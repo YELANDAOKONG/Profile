@@ -1,5 +1,9 @@
 # Profile
 
+> [简体中文](README.zh_cn.md)
+>
+> [Business Rules](BUSINESS.md) · [Architecture](ARCHITECTURE.md) · [Design](DESIGN.md)
+
 A .NET 10 personal publishing and social platform combining a personal homepage,
 long-form blog posts, short-form posts, and moment-style social posts with media
 and visibility controls.
