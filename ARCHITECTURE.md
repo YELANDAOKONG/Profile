@@ -92,6 +92,16 @@ service boundary.
 - `Profile.Contracts`: add this project when integration-event contracts are
   introduced. Keep these contracts stable and free of infrastructure types.
 
+Domain models and database entity models are independent:
+
+- Aggregates and value objects in `Profile.Domain` define business rules and
+  invariants. They must not be shaped by persistence concerns.
+- EF Core entities in `Profile.Infrastructure` represent the database schema.
+  They may differ from domain models in structure, naming, and relationships.
+- Infrastructure is responsible for mapping between domain aggregates and
+  database entities. Domain must never reference or become coupled to EF
+  entity types.
+
 Web, Worker, and Generator must reuse Application use cases and Infrastructure
 registrations. Do not duplicate publishing, authorization, or query logic in a
 composition root.
