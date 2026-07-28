@@ -40,6 +40,51 @@ Use the community-capable schema in both modes:
 Do not assume that multi-user means multi-tenant. Supporting multiple isolated
 sites with `TenantId` is a separate product decision.
 
+## Basic Account Identity
+
+Keep the basic account model separate from user-facing profile data. Nicknames,
+avatars, biographies, and other presentation settings do not belong to the
+basic account structure.
+
+Each account has:
+
+- An immutable `UserId` backed by a globally unique `Guid`.
+- A mutable `StringId`.
+- One current email address with verification metadata.
+
+Login-input parsing belongs to the HTTP/controller boundary:
+
+- `#<guid>` selects a `UserId`.
+- `@<stringId>` selects a `StringId`.
+- Input without a prefix defaults to `StringId`.
+- Prefixes are input syntax and must not be stored in Domain values.
+
+`StringId` has these rules:
+
+- Length is between 5 and 64 ASCII characters, inclusive.
+- Allowed characters are `A-Z`, `a-z`, `0-9`, `_`, and `.`.
+- It must not start or end with `.`.
+- Consecutive `.` characters are forbidden.
+- `_` may appear consecutively and at either end.
+- Preserve the selected casing for display, but perform availability checks,
+  uniqueness enforcement, and login lookup case-insensitively.
+- After a change, only the new value may be used to log in.
+- Retain the old value for a configurable reservation period whose default is
+  90 days.
+
+Email rules:
+
+- An account has one current email address.
+- The address may be changed.
+- Email is not a login identifier.
+- Email is not globally unique; multiple accounts may use the same address.
+- Preserve the address while comparing and normalizing it case-insensitively.
+- Store verification information for the current address.
+
+When a user is deleted, permanently retain its `UserId`, StringId identity
+records, and email identity records. Do not recycle identity data belonging to
+a deleted account.
+
 ## Supported Infrastructure
 
 The application must select infrastructure through configuration at startup.
