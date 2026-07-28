@@ -112,6 +112,10 @@ deletion. The account model must be able to represent those conditions even
 though the ordinary administrative hierarchy does not authorize another Root
 to impose them.
 
+The trusted `Profile.Console` administrative surface may suspend or ban a Root
+account. No account, including another Root, may perform those operations
+through ordinary account-based administration.
+
 ## Account Restrictions and Deletion
 
 Suspension and banning are distinct account restrictions and must not be
@@ -146,6 +150,13 @@ Account deletion uses a configurable recovery period whose default is 14 days:
 - After the recovery period expires, the account may be permanently deleted.
 - Permanent deletion must still retain the identity records required by the
   Basic Account Identity rules.
+
+When account restrictions overlap:
+
+- An active ban takes precedence over deletion recovery. A banned account
+  cannot log in to restore itself, and none of its content is publicly visible.
+- If an account is both suspended and pending deletion, it may log in but may
+  only restore the account. Its public content remains visible.
 
 Login, authorization, public queries, and static generation must all enforce
 these rules. Hiding actions in the user interface is not sufficient.
