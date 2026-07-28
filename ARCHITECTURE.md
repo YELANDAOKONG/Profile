@@ -89,11 +89,13 @@ service boundary.
   executable project.
 - `Profile.Generator`: command-line composition root for versioned static JSON
   generation.
-- `Profile.Console`: trusted command-line administrative composition root. It
-  may perform explicitly authorized system administration, including changing
-  roles and managing restrictions for Root accounts. It must invoke shared
-  Application use cases and must not edit database records directly or bypass
-  domain and authorization rules.
+- `Profile.Console`: a CLI management tool that runs on the server and
+  operates with the highest level of permissions in the system. It is a trusted
+  command-line administrative composition root. It may perform explicitly
+  authorized system administration, including changing roles and managing
+  restrictions for Root accounts. It must invoke shared Application use cases
+  and must not edit database records directly or bypass domain and
+  authorization rules.
 - `Profile.Contracts`: add this project when integration-event contracts are
   introduced. Keep these contracts stable and free of infrastructure types.
 
