@@ -268,7 +268,9 @@ use only a single `ContentBody`. Block types:
 - Blockquote: contains `ContentBody` and is a distinct concept from
   "Quote Post/Quote Moment" referencing Post/Moment.
 - Code block: contains source text and a non-empty language identifier.
-- Divider / layout blocks.
+- Divider block.
+- Spacer block: represents one fixed unit of vertical spacing and carries no
+  configurable size or nested content. Other layout blocks remain deferred.
 
 A Text block, Blockquote, or Code block may contain at most 2097152
 characters of text. A language identifier must not contain surrounding
