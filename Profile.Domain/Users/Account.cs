@@ -4,17 +4,23 @@ namespace Profile.Domain.Users;
 
 public sealed class Account
 {
-    public UserIdentity Id { get; init; }
+    public required UserIdentity Id { get; init; }
+
+    public required StringIdentity StringId { get; init; }
+
+    public required AccountEmail Email { get; init; }
+
+    public required AccountRole Role { get; init; }
+
+    // Account Status
+    public AccountSuspension? Suspension { get; init; }
+
+    public AccountBan? Ban { get; init; }
+
     
-    public StringIdentity StringId { get; private set; }
-    
-    public AccountEmail Email { get; private set; }
-    
-    
-    
-    public DateTimeOffset CreatedAt { get; private set; }
-    
-    public DateTimeOffset UpdatedAt { get; private set; }
-    
-    public DateTimeOffset? DeletedAt { get; private set; }
+    public required DateTimeOffset CreatedAt { get; init; }
+
+    public required DateTimeOffset UpdatedAt { get; init; }
+
+    public DateTimeOffset? DeletionRequestedAt { get; init; }
 }
