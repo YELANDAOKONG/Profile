@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Worker", "Profile.W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Generator", "Profile.Generator\Profile.Generator.csproj", "{4CD38BF0-6463-4B50-B2A5-CEAE7CF7AB27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Console", "Profile.Console\Profile.Console.csproj", "{38F45126-7D67-48A5-B02E-2BD50A8AD27A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +62,9 @@ Global
 		{4CD38BF0-6463-4B50-B2A5-CEAE7CF7AB27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CD38BF0-6463-4B50-B2A5-CEAE7CF7AB27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CD38BF0-6463-4B50-B2A5-CEAE7CF7AB27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38F45126-7D67-48A5-B02E-2BD50A8AD27A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38F45126-7D67-48A5-B02E-2BD50A8AD27A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38F45126-7D67-48A5-B02E-2BD50A8AD27A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38F45126-7D67-48A5-B02E-2BD50A8AD27A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
