@@ -51,15 +51,13 @@ public sealed class Account
     public AccountEmail Email { get; private set; }
 
     public AccountRole Role { get; private set; }
-    
-    
+
     // Account Status
     public AccountSuspension? Suspension { get; private set; }
 
     public AccountBan? Ban { get; private set; }
 
     public AccountDeletion? Deletion { get; private set; }
-    
 
     public DateTimeOffset CreatedAt { get; }
 
@@ -173,13 +171,16 @@ public sealed class Account
                 "A Root role cannot be assigned through ordinary account administration.");
         }
 
-        if (Role == newRole)
-        {
-            return;
-        }
+        ApplyRole(newRole, changedAt);
+    }
 
-        Role = newRole;
-        UpdatedAt = changedAt;
+    public void ChangeRoleBySystemAdministration(
+        AccountRole newRole,
+        DateTimeOffset changedAt)
+    {
+        ValidateRole(newRole, nameof(newRole));
+        EnsureMutationTime(changedAt);
+        ApplyRole(newRole, changedAt);
     }
 
     public void Suspend(
@@ -386,6 +387,17 @@ public sealed class Account
                 stateTimestamp,
                 "Account state cannot start after the account was last updated.");
         }
+    }
+
+    private void ApplyRole(AccountRole newRole, DateTimeOffset changedAt)
+    {
+        if (Role == newRole)
+        {
+            return;
+        }
+
+        Role = newRole;
+        UpdatedAt = changedAt;
     }
 
     private void ApplySuspension(

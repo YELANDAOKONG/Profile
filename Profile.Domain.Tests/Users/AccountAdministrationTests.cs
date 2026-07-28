@@ -120,6 +120,27 @@ public sealed class AccountAdministrationTests
                 _createdAt.AddMinutes(1)));
     }
 
+    [Fact]
+    public void ChangeRoleBySystemAdministration_CanGrantAndRevokeRoot()
+    {
+        var account = CreateAccount(AccountRole.User, "user.account");
+        var promotedAt = _createdAt.AddMinutes(1);
+        var demotedAt = _createdAt.AddMinutes(2);
+
+        account.ChangeRoleBySystemAdministration(
+            AccountRole.Root,
+            promotedAt);
+
+        Assert.Equal(AccountRole.Root, account.Role);
+
+        account.ChangeRoleBySystemAdministration(
+            AccountRole.User,
+            demotedAt);
+
+        Assert.Equal(AccountRole.User, account.Role);
+        Assert.Equal(demotedAt, account.UpdatedAt);
+    }
+
     private static Account CreateAccount(
         AccountRole role,
         string stringId) =>
