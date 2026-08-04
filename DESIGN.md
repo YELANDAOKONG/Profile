@@ -209,6 +209,17 @@ and site can be associated via the author account.
   account chooses between direct follow or follow requests requiring
   approval via the "follow requires approval" toggle in
   `AccountSettings`.
+- Self-following is forbidden. A pending request may be approved or rejected
+  only by its target and cancelled only by its requester. Rejected and
+  cancelled requests do not impose a cooldown; a new request may be created
+  immediately. Only pending-request uniqueness is coordinated outside the
+  aggregate.
+- Turning follow approval off requires an explicit pending-request disposition:
+  keep all existing requests pending or approve all. The safe default is to
+  keep them pending because approving them changes access to historical
+  Followers content immediately. New follows become direct as soon as the
+  setting is off. If approve-all is selected, Application creates the follows
+  and resolves the requests transactionally.
 - The `Followers` / `MutualFollowers` visibility audience is determined in
   real time at query time; changes in follow relationships immediately
   affect the accessibility of historical content.
@@ -222,6 +233,10 @@ An account may block other accounts. Block effects:
 - Forbids following (existing follows are automatically removed);
 - Forbids commenting on the other party's content;
 - Forbids interactions (like, repost, quote, favorite, bookmark).
+
+Self-blocking is forbidden. Creating a block removes follows in both directions
+and pending follow requests in both directions in one Application transaction.
+Removing the block restores none of those relationships or requests.
 
 Block does not make content invisible: the blocked party can still see the
 blocker's Public content.

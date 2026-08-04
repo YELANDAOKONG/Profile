@@ -79,13 +79,77 @@ public sealed class AccountSettingsTests
         Assert.True(settings.FollowRequiresApproval);
     }
 
-    private static AccountSettings CreateSettings() =>
+    [Fact]
+    public void DisableFollowApproval_WithoutDisposition_DefaultsToKeepPending()
+    {
+        var settings = CreateSettings(followRequiresApproval: true);
+
+        var disposition = settings.SetFollowRequiresApproval(false);
+
+        Assert.False(settings.FollowRequiresApproval);
+        Assert.Equal(
+            PendingFollowRequestDisposition.KeepPending,
+            disposition);
+    }
+
+    [Fact]
+    public void DisableFollowApproval_WithApproveAll_ReturnsSelectedDisposition()
+    {
+        var settings = CreateSettings(followRequiresApproval: true);
+
+        var disposition = settings.SetFollowRequiresApproval(
+            false,
+            PendingFollowRequestDisposition.ApproveAll);
+
+        Assert.False(settings.FollowRequiresApproval);
+        Assert.Equal(
+            PendingFollowRequestDisposition.ApproveAll,
+            disposition);
+    }
+
+    [Fact]
+    public void EnableFollowApproval_DoesNotReturnPendingDisposition()
+    {
+        var settings = CreateSettings();
+
+        var disposition = settings.SetFollowRequiresApproval(true);
+
+        Assert.True(settings.FollowRequiresApproval);
+        Assert.Null(disposition);
+    }
+
+    [Fact]
+    public void SetFollowApproval_ToCurrentValue_DoesNotReturnPendingDisposition()
+    {
+        var settings = CreateSettings();
+
+        var disposition = settings.SetFollowRequiresApproval(false);
+
+        Assert.False(settings.FollowRequiresApproval);
+        Assert.Null(disposition);
+    }
+
+    [Fact]
+    public void SetFollowApproval_WithUnsupportedDisposition_ThrowsArgumentOutOfRangeException()
+    {
+        var settings = CreateSettings(followRequiresApproval: true);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => settings.SetFollowRequiresApproval(
+                false,
+                (PendingFollowRequestDisposition)999));
+
+        Assert.True(settings.FollowRequiresApproval);
+    }
+
+    private static AccountSettings CreateSettings(
+        bool followRequiresApproval = false) =>
         AccountSettings.Create(
             UserIdentity.New(),
             new LanguageTag("zh-TW"),
             new TimeZoneIdentifier("Asia/Taipei"),
             CreateNotifications(),
-            false);
+            followRequiresApproval);
 
     private static EmailNotificationPreferences CreateNotifications() =>
         new(true, true, true, true, true);

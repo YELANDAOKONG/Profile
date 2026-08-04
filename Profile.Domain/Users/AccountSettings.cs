@@ -95,9 +95,27 @@ public sealed class AccountSettings
         EmailNotifications = preferences;
     }
 
-    public void SetFollowRequiresApproval(bool value)
+    public PendingFollowRequestDisposition? SetFollowRequiresApproval(
+        bool value,
+        PendingFollowRequestDisposition pendingRequestDisposition =
+            PendingFollowRequestDisposition.KeepPending)
     {
+        if (!Enum.IsDefined(pendingRequestDisposition))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(pendingRequestDisposition),
+                pendingRequestDisposition,
+                "Pending follow request disposition is not supported.");
+        }
+
+        if (FollowRequiresApproval == value)
+        {
+            return null;
+        }
+
         FollowRequiresApproval = value;
+
+        return value ? null : pendingRequestDisposition;
     }
 
     private static void ValidateVisibility(
