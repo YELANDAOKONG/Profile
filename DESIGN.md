@@ -317,7 +317,7 @@ Publication state and deletion state are modeled separately. The deletion
 object records:
 
 - `DeletedAt`;
-- `PurgeAt`: fixed at `DeletedAt + 7 days` when deletion occurs;
+- `PurgeAt`: fixed at `DeletedAt + 14 days` when deletion occurs;
   thereafter immutable.
 
 Rules:
@@ -326,7 +326,7 @@ Rules:
   restoration restores all relationships from before deletion (comments,
   likes, reposts, bookmarks, favorites, revisions, category/tag
   associations).
-- Automatic permanent deletion after 7 days; no one (including the author
+- Automatic permanent deletion after 14 days; no one (including the author
   and administrators) may permanently delete before the deadline.
   Rationale: The user chose expiration-only automatic purge so that the
   recovery period is absolute for all roles.
@@ -337,7 +337,7 @@ Rules:
   Rationale: Media may be referenced in multiple places, and the user
   explicitly stated that media files are not subject to automatic cleanup.
 - When unpublishing, the user may choose "Save as Draft" (convert to
-  Draft) or "Discard" (enter soft deletion with the 7-day recovery
+  Draft) or "Discard" (enter soft deletion with the 14-day recovery
   period).
 
 ### 6.6 MediaReference
@@ -459,7 +459,7 @@ About, Contact, Privacy Policy, etc.
 - Structure: title (≤256, consistent with Blog), ordered content block
   collection (same model as Blog), visibility, comment toggle and
   commenter scope, SEO title / description, featured media.
-- Simplified lifecycle: only `Draft` / `Published` + soft deletion (7-day
+- Simplified lifecycle: only `Draft` / `Published` + soft deletion (14-day
   recycle rule same as §6.5); no scheduled publishing, no PendingReview,
   no revision history.
   Rationale: Pages change infrequently; the user explicitly chose a
@@ -740,4 +740,4 @@ decision:
 | Menus per account | 64 |
 | Menu items per menu | 64 |
 | Pages per account | 1024 |
-| Soft-delete recovery period | 7 days (fixed) |
+| Soft-delete recovery period | 14 days (fixed) |
