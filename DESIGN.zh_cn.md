@@ -408,7 +408,8 @@ Moment
   Body: ContentBody?           // ≤2048
   Media: 只读 MediaReference 集合  // 图片+视频，≤9
   Visibility: ContentVisibility
-  AudienceExclusions: UserIdentity 集合 (≤2048)
+  AudienceRestrictionMode: Blacklist / Whitelist
+  AudienceAccounts: UserIdentity 集合 (≤2048)
   Location: 结构化位置 (坐标 + 地点名称)?
   QuotedMomentId: MomentIdentity?
   CommentsAllowed: bool
@@ -420,8 +421,11 @@ Moment
 ```
 
 - 草稿与发布不变量与 Post 相同：正文与媒体至少其一。
-- 受众排除是账户集合，叠加在可见性枚举之上：先按可见性确定受众，再
-  从中排除指定账户；排除只做减法，绝不扩大可见范围。
+- 受众限制是叠加在可见性枚举之上的可选账户集合。`Blacklist` 模式先按
+  可见性确定受众，再从中排除指定账户；`Whitelist` 模式将可见性受众与
+  指定账户取交集。两种模式都不能扩大可见性枚举授予的受众范围。
+- 黑名单模式下空账户集合不产生限制；白名单模式下空账户集合产生空受众。
+  账户集合最多包含 2048 个不重复的 `UserIdentity`。
 - Moment 只能转发/引用 Moment；Moment 无收藏、无书签。
 - 评论/点赞可见性规则与 Post 相同；原 Moment 不可用时转发/引用行为
   与 Post 相同（引用保留自身内容+占位，纯转发隐藏）。
@@ -564,7 +568,7 @@ Page、评论及 AccountProfile 的媒体统一引用媒体库媒体项。
 | 评论媒体 | 4（仅图） |
 | 媒体单文件 | 图 16 MB / 音 64 MB / 视 1 GB |
 | 媒体总配额 | 按部署配置 |
-| 受众排除 | 2048 账户 |
+| 受众限制账户 | 2048 账户 |
 | 合著者 | 32 |
 | 文件夹/账户 | 512 |
 | 标签/账户 | 8192 |

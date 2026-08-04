@@ -523,7 +523,8 @@ Moment
   Body: ContentBody?           // ≤2048
   Media: read-only MediaReference collection  // image+video, ≤9
   Visibility: ContentVisibility
-  AudienceExclusions: UserIdentity collection (≤2048)
+  AudienceRestrictionMode: Blacklist / Whitelist
+  AudienceAccounts: UserIdentity collection (≤2048)
   Location: structured location (coordinates + place name)?
   QuotedMomentId: MomentIdentity?
   CommentsAllowed: bool
@@ -536,10 +537,14 @@ Moment
 
 - Draft and publish invariants are the same as Post: at least one of body
   or media.
-- Audience exclusions are a set of accounts overlaid on top of the
-  visibility enum: first determine the audience by visibility, then
-  exclude the specified accounts from it; exclusions only subtract and
-  never expand visibility scope.
+- Audience restrictions are an optional account set overlaid on top of the
+  visibility enum. `Blacklist` first determines the audience from visibility
+  and then subtracts the listed accounts. `Whitelist` intersects the
+  visibility audience with the listed accounts. Neither mode can expand the
+  audience granted by the visibility enum.
+- An empty account set has no effect in `Blacklist` mode and produces an empty
+  audience in `Whitelist` mode. The account set contains at most 2048 unique
+  `UserIdentity` values.
 - A Moment can only repost/quote a Moment; Moments have no favorites and
   no bookmarks.
 - Comment / like visibility rules are the same as Post; when the original
@@ -717,7 +722,7 @@ decision:
 | Comment media | 4 (image only) |
 | Single media file | Image 16 MB / Audio 64 MB / Video 1 GB |
 | Total media quota | Per deployment config |
-| Audience exclusions | 2048 accounts |
+| Audience restriction accounts | 2048 accounts |
 | Co-authors | 32 |
 | Folders per account | 512 |
 | Tags per account | 8192 |
