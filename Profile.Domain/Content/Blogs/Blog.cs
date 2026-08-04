@@ -257,6 +257,84 @@ public sealed class Blog
             createdAt,
             updatedAt);
 
+    public void Schedule(DateTimeOffset scheduledAt, DateTimeOffset changedAt)
+    {
+        EnsureCanChangePublication(changedAt, nameof(changedAt));
+
+        Publication = Publication.Schedule(scheduledAt, changedAt);
+        UpdatedAt = changedAt;
+    }
+
+    public void Unschedule(DateTimeOffset changedAt)
+    {
+        EnsureCanChangePublication(changedAt, nameof(changedAt));
+
+        Publication = Publication.Unschedule();
+        UpdatedAt = changedAt;
+    }
+
+    public void SubmitForReview(DateTimeOffset changedAt)
+    {
+        EnsureCanChangePublication(changedAt, nameof(changedAt));
+        ValidateTitle(Title);
+
+        Publication = Publication.SubmitForReview();
+        UpdatedAt = changedAt;
+    }
+
+    public void Approve(DateTimeOffset publishedAt)
+    {
+        EnsureCanChangePublication(publishedAt, nameof(publishedAt));
+        ValidateTitle(Title);
+
+        Publication = Publication.Approve(publishedAt);
+        UpdatedAt = publishedAt;
+    }
+
+    public void PublishScheduled(DateTimeOffset publishedAt)
+    {
+        EnsureCanChangePublication(publishedAt, nameof(publishedAt));
+        ValidateTitle(Title);
+
+        Publication = Publication.PublishScheduled(publishedAt);
+        UpdatedAt = publishedAt;
+    }
+
+    public void ReturnToDraft(DateTimeOffset changedAt)
+    {
+        EnsureCanChangePublication(changedAt, nameof(changedAt));
+
+        Publication = Publication.ReturnToDraft();
+        UpdatedAt = changedAt;
+    }
+
+    public void UnpublishToDraft(DateTimeOffset changedAt)
+    {
+        EnsureCanChangePublication(changedAt, nameof(changedAt));
+
+        Publication = Publication.Unpublish();
+        UpdatedAt = changedAt;
+    }
+
+    private void EnsureCanChangePublication(
+        DateTimeOffset changedAt,
+        string parameterName)
+    {
+        if (Deletion is not null)
+        {
+            throw new InvalidOperationException(
+                "A deleted blog cannot change publication state.");
+        }
+
+        if (changedAt < UpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                changedAt,
+                "Publication change time cannot be earlier than the blog's updated time.");
+        }
+    }
+
     private static ReadOnlyCollection<BlogTagIdentity> CopyTagIds(
         IEnumerable<BlogTagIdentity> tagIds)
     {
