@@ -624,7 +624,22 @@ Moment
 ```
 
 - Draft and publish invariants are the same as Post: at least one of body
-  or media.
+  or media. Location and quoted content do not provide an exemption. When a
+  body is present, its source must contain at least one non-whitespace
+  character; callers use `null` instead of an empty body object, and the
+  source is otherwise preserved exactly.
+- A published Moment's body, media collection, location, and quoted target
+  are immutable. Visibility, audience restrictions, comment settings, and
+  tags remain mutable; unpublishing to Draft permits content editing again.
+- Media identities must be unique within one Moment even when
+  reference-specific alt text differs. The Moment aggregate enforces
+  collection shape and the nine-item limit; Application validates that each
+  referenced media item belongs to the author and is an image or video.
+- An optional location contains required decimal latitude and longitude plus
+  an optional place name. Latitude is in [-90, 90], longitude in [-180, 180],
+  and a present place name must be non-blank, contain no surrounding
+  whitespace, and contain at most 128 characters. Altitude, accuracy, and
+  external map-provider identifiers are intentionally not modeled.
 - Audience restrictions are an optional account set overlaid on top of the
   visibility enum. `Blacklist` first determines the audience from visibility
   and then subtracts the listed accounts. `Whitelist` intersects the
@@ -632,13 +647,22 @@ Moment
   audience granted by the visibility enum.
 - An empty account set has no effect in `Blacklist` mode and produces an empty
   audience in `Whitelist` mode. The account set contains at most 2048 unique
-  `UserIdentity` values.
-- A Moment can only repost/quote a Moment; Moments have no favorites and
-  no bookmarks.
+  `UserIdentity` values and must not contain the author, whose own access is
+  unaffected by the overlay.
+- Repost is an independent `MomentRepost` relationship with its own strongly
+  typed identity. A Moment can only repost/quote a Moment; quoting or
+  reposting one's own Moment is allowed, and the same account may repost the
+  same Moment multiple times. Moments have no favorites and no bookmarks.
+- Reposting or quoting is allowed only for an active, published Moment with
+  `ContentVisibility.Public` and no audience narrowing: `Blacklist` with an
+  empty account set. A non-empty blacklist, any whitelist, or a block between
+  the authors rejects the operation directly in the domain.
 - Comment / like visibility rules are the same as Post; when the original
   Moment is unavailable, repost/quote behavior is the same as Post (quotes
   retain own content + placeholder, pure reposts are hidden).
-- Moments exist permanently with no automatic expiration.
+- Moments have no story-style automatic expiration. Soft deletion follows the
+  shared 14-day recovery rule (§6.5), after which the Moment is ready for
+  permanent purge.
 - Tags use an independent MomentTag namespace (§14).
 
 ## 11. Comments
