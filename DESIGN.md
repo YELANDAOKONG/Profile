@@ -474,20 +474,44 @@ Blog
 An independent aggregate carrying non-chronological site pages such as
 About, Contact, Privacy Policy, etc.
 
-- `PageIdentity`: globally unique Guid internal identity; routing uses a
-  user-specified text identifier (mutable, slug-style rules in §14), e.g.,
-  `/about`.
-  Rationale: Consistent with the taxonomy — internal Guid for
-  associations, text identifier is only a mutable route.
-- Structure: title (≤256, consistent with Blog), ordered content block
-  collection (same model as Blog), visibility, comment toggle and
-  commenter scope, SEO title / description, featured media.
-- Simplified lifecycle: only `Draft` / `Published` + soft deletion (14-day
-  recycle rule same as §6.5); no scheduled publishing, no PendingReview,
-  no revision history.
+- `PageIdentity`: globally unique Guid internal identity.
+- `PageRouteIdentifier`: mutable, 1–128 ASCII letters, digits, or `-`;
+  it must start and end with a letter or digit, and consecutive `-`
+  characters are forbidden. The selected casing is preserved, while a
+  lowercase normalized value is used for uniqueness and lookup. Uniqueness
+  is scoped by `AuthorId` and is case-insensitive.
+- Domains and route prefixes do not enter `PageRouteIdentifier`. Application
+  routing maps an account page to `/@{stringId}/{pageId}` in community
+  routes and may additionally expose the configured Personal root account
+  page as `/{pageId}`. This separation also allows a future verified custom
+  domain to expose the same Page without changing its domain identity.
+- System-reserved paths such as blog, post, moment, and taxonomy routes are
+  checked uniformly by Application routing policy rather than hard-coded in
+  the Page value object.
+- A substantive route change creates an independent `PageRouteReservation`
+  with a separately configurable default period of 90 days. Its release time
+  is fixed at the change. During that period the old identifier is unavailable
+  to every Page in the account, including the original Page, and resolves with
+  a 301 redirect when the target Page is publicly routable. A casing-only
+  change updates the displayed form without creating a reservation.
+- Soft deletion retains the current route and existing reservations. Public
+  routing remains unavailable while deleted and resumes after restoration.
+  Permanent deletion releases the current route immediately; historical route
+  reservations keep their already-fixed release times and then expire
+  normally.
+- Structure: title (non-empty, ≤256), ordered content block collection (same
+  model as Blog and allowed to be empty), visibility, comment toggle and
+  commenter scope, SEO title / description, featured media, publication,
+  deletion, and created/updated times.
+- Simplified lifecycle: only `Draft ⇄ Published` + soft deletion (14-day
+  recycle rule same as §6.5); no scheduled publishing, no PendingReview, and
+  no revision history. First and last publish times are retained across
+  unpublishing and updated when the Page is republished.
   Rationale: Pages change infrequently; the user explicitly chose a
-  simplified lifecycle.
-- Pages per account ≤1024.
+  simplified lifecycle while retaining publication metadata needed by
+  Sitemap and other output projections.
+- Pages per account ≤1024; the cross-aggregate count is enforced by an
+  Application coordinator.
 
 ## 9. Post
 
@@ -743,6 +767,7 @@ decision:
 | SEO description | 512 characters |
 | Tag/Category name | 64 characters |
 | Tag description | 1024 characters |
+| Page route identifier | 128 characters |
 | Nickname / Site title / Co-author text | 64 characters |
 | Bio | 2048 characters |
 | Site description | 1024 characters |
