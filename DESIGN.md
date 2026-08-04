@@ -555,6 +555,16 @@ Post
 - Publish invariants: at least one of body or media. Quoting does not
   provide an exemption — a quote post must also carry its own body or
   media (user ruling, bare quotes withdrawn).
+- When a body is present, its source must contain at least one non-whitespace
+  character; callers use `null` rather than storing an empty body object.
+  The source itself is otherwise preserved exactly. A published Post's body,
+  media collection, and quoted target are immutable. Visibility, audience
+  restrictions, comment settings, and tags remain mutable; unpublishing to
+  Draft permits body and media editing again.
+- Media identities must be unique within one Post even when reference-specific
+  alt text differs. The Post aggregate enforces collection shape and the
+  nine-item limit; Application validates that referenced media belongs to the
+  author and has an image, video, or audio type by loading the media records.
 - Audience restrictions are an optional account set overlaid on top of the
   visibility enum. `Blacklist` first determines the audience from visibility
   and then subtracts the listed accounts. `Whitelist` intersects the
@@ -562,14 +572,20 @@ Post
   audience granted by the visibility enum.
 - An empty account set has no effect in `Blacklist` mode and produces an empty
   audience in `Whitelist` mode. The account set contains at most 2048 unique
-  `UserIdentity` values.
+  `UserIdentity` values and must not contain the author, whose own access is
+  unaffected by the overlay.
 - Repost is modeled as an independent relationship `PostRepost`, not a
   special Post containing copied body; reposting one's own Post is
-  allowed; the same account may repost the same Post multiple times.
+  allowed; the same account may repost the same Post multiple times, so every
+  repost has its own strongly typed identity.
 - Quote is a new Post: carries its own body/media + `QuotedPostId`; a
-  Post may only repost/quote a Post.
+  Post may only repost/quote a Post. Quoting one's own Post is allowed.
 - Only Public content may be reposted / quoted; operations to repost/quote
-  non-public content are directly rejected by the domain.
+  non-public content are directly rejected by the domain. Public means an
+  active, published Post with `ContentVisibility.Public` and no audience
+  narrowing: `Blacklist` with an empty account set. A non-empty blacklist or
+  any whitelist makes the Post unavailable for repost/quote, preventing the
+  new content from bypassing the original audience restriction.
   Rationale: The user decided to intercept at the operation entry point to
   prevent restricted content from leaking via repost chains.
 - When the original Post is deleted, hidden, or visibility is reduced:
