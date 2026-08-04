@@ -316,6 +316,58 @@ public sealed class Blog
         UpdatedAt = changedAt;
     }
 
+    public void Delete(DateTimeOffset deletedAt)
+    {
+        EnsureMutationTime(deletedAt, nameof(deletedAt));
+
+        if (Deletion is not null)
+        {
+            throw new InvalidOperationException(
+                "The blog is already deleted.");
+        }
+
+        Deletion = ContentDeletion.Create(deletedAt);
+        UpdatedAt = deletedAt;
+    }
+
+    public void Restore(DateTimeOffset restoredAt)
+    {
+        EnsureMutationTime(restoredAt, nameof(restoredAt));
+
+        if (Deletion is not { } deletion)
+        {
+            throw new InvalidOperationException(
+                "The blog is not deleted.");
+        }
+
+        if (!deletion.CanRestoreAt(restoredAt))
+        {
+            throw new InvalidOperationException(
+                "The blog cannot be restored after its recovery period has ended.");
+        }
+
+        Deletion = null;
+        UpdatedAt = restoredAt;
+    }
+
+    public void UnpublishAndDiscard(DateTimeOffset deletedAt)
+    {
+        EnsureCanChangePublication(deletedAt, nameof(deletedAt));
+
+        var publication = Publication.Unpublish();
+        var deletion = ContentDeletion.Create(deletedAt);
+
+        Publication = publication;
+        Deletion = deletion;
+        UpdatedAt = deletedAt;
+    }
+
+    public bool CanRestoreAt(DateTimeOffset timestamp) =>
+        Deletion?.CanRestoreAt(timestamp) ?? false;
+
+    public bool IsReadyForPurgeAt(DateTimeOffset timestamp) =>
+        Deletion?.IsReadyForPurgeAt(timestamp) ?? false;
+
     private void EnsureCanChangePublication(
         DateTimeOffset changedAt,
         string parameterName)
@@ -326,12 +378,19 @@ public sealed class Blog
                 "A deleted blog cannot change publication state.");
         }
 
+        EnsureMutationTime(changedAt, parameterName);
+    }
+
+    private void EnsureMutationTime(
+        DateTimeOffset changedAt,
+        string parameterName)
+    {
         if (changedAt < UpdatedAt)
         {
             throw new ArgumentOutOfRangeException(
                 parameterName,
                 changedAt,
-                "Publication change time cannot be earlier than the blog's updated time.");
+                "Change time cannot be earlier than the blog's updated time.");
         }
     }
 

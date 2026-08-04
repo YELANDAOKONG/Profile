@@ -4,6 +4,8 @@ namespace Profile.Domain.Tests.Content.Value;
 
 public sealed class ContentDeletionTests
 {
+    private const int ExpectedRecoveryPeriodDays = 14;
+
     private static readonly DateTimeOffset _baseTime =
         new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -14,8 +16,11 @@ public sealed class ContentDeletionTests
 
         Assert.Equal(_baseTime, deletion.DeletedAt);
         Assert.Equal(
-            _baseTime.AddDays(ContentDeletion.RecoveryPeriodDays),
+            _baseTime.AddDays(ExpectedRecoveryPeriodDays),
             deletion.PurgeAt);
+        Assert.Equal(
+            ExpectedRecoveryPeriodDays,
+            ContentDeletion.RecoveryPeriodDays);
     }
 
     [Fact]

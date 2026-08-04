@@ -1,10 +1,10 @@
 namespace Profile.Domain.Content.Value;
 
-// The 7-day recovery period is fixed by DESIGN §6.5 for every role, so the
+// The 14-day recovery period is fixed by DESIGN §6.5 for every role, so the
 // value object owns the period instead of accepting it as a parameter.
 public sealed record ContentDeletion
 {
-    public const int RecoveryPeriodDays = 7;
+    public const int RecoveryPeriodDays = 14;
 
     private ContentDeletion(DateTimeOffset deletedAt, DateTimeOffset purgeAt)
     {
