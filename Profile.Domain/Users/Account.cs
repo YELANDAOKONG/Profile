@@ -137,19 +137,54 @@ public sealed class Account
             deletion,
             memorialization);
 
-    public void ChangeStringId(StringIdentity stringId, DateTimeOffset changedAt)
+    public StringIdentityReservation? ChangeStringId(
+        StringIdentity stringId,
+        DateTimeOffset changedAt) =>
+        ChangeStringId(
+            stringId,
+            changedAt,
+            StringIdentityReservation.DefaultReservationPeriod);
+
+    public StringIdentityReservation? ChangeStringId(
+        StringIdentity stringId,
+        DateTimeOffset changedAt,
+        TimeSpan reservationPeriod)
     {
         ArgumentNullException.ThrowIfNull(stringId);
 
         EnsureCanPerformOperation(changedAt);
 
+        if (reservationPeriod <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(reservationPeriod),
+                reservationPeriod,
+                "String identity reservation period must be greater than zero.");
+        }
+
         if (string.Equals(StringId.Value, stringId.Value, StringComparison.Ordinal))
         {
-            return;
+            return null;
         }
+
+        if (StringId.Equals(stringId))
+        {
+            StringId = stringId;
+            UpdatedAt = changedAt;
+
+            return null;
+        }
+
+        var reservation = StringIdentityReservation.Create(
+            Id,
+            StringId,
+            changedAt,
+            reservationPeriod);
 
         StringId = stringId;
         UpdatedAt = changedAt;
+
+        return reservation;
     }
 
     public void ChangeEmail(EmailAddress address, DateTimeOffset changedAt)
@@ -378,6 +413,20 @@ public sealed class Account
     public bool IsReadyForPermanentDeletionAt(DateTimeOffset timestamp) =>
         Deletion is { } deletion &&
         timestamp >= deletion.RecoveryEndsAt;
+
+    public StringIdentityLock CreatePermanentStringIdentityLock(
+        DateTimeOffset lockedAt)
+    {
+        EnsureMutationTime(lockedAt);
+
+        if (!IsReadyForPermanentDeletionAt(lockedAt))
+        {
+            throw new InvalidOperationException(
+                "The account is not ready for permanent deletion.");
+        }
+
+        return new StringIdentityLock(Id, StringId, lockedAt);
+    }
 
     public bool IsMemorializedAt(DateTimeOffset timestamp) =>
         Memorialization is { } memorialization &&

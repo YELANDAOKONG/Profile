@@ -80,6 +80,43 @@ public sealed class AccountDeletionTests
     }
 
     [Fact]
+    public void CreatePermanentStringIdentityLock_WhenRecoveryEnds_LocksCurrentIdentity()
+    {
+        var account = CreateAccount();
+        var requestedAt = _createdAt.AddMinutes(1);
+        var recoveryEndsAt = requestedAt.Add(_recoveryPeriod);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
+
+        var identityLock = account.CreatePermanentStringIdentityLock(
+            recoveryEndsAt);
+
+        Assert.Equal(account.Id, identityLock.OwnerId);
+        Assert.Equal(account.StringId, identityLock.StringId);
+        Assert.Equal(recoveryEndsAt, identityLock.LockedAt);
+    }
+
+    [Fact]
+    public void CreatePermanentStringIdentityLock_BeforeRecoveryEnds_ThrowsInvalidOperationException()
+    {
+        var account = CreateAccount();
+        var requestedAt = _createdAt.AddMinutes(1);
+        account.RequestDeletion(requestedAt, _recoveryPeriod, _contentPolicy);
+
+        Assert.Throws<InvalidOperationException>(
+            () => account.CreatePermanentStringIdentityLock(
+                requestedAt.Add(_recoveryPeriod).AddTicks(-1)));
+    }
+
+    [Fact]
+    public void CreatePermanentStringIdentityLock_WithoutDeletionRequest_ThrowsInvalidOperationException()
+    {
+        var account = CreateAccount();
+
+        Assert.Throws<InvalidOperationException>(
+            () => account.CreatePermanentStringIdentityLock(_createdAt));
+    }
+
+    [Fact]
     public void BeforeDeletionRequest_AccountCanLoginAndPerformOperations()
     {
         var account = CreateAccount();

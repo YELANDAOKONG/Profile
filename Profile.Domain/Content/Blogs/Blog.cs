@@ -257,6 +257,196 @@ public sealed class Blog
             createdAt,
             updatedAt);
 
+    public void UpdateDetails(
+        string title,
+        string? summary,
+        MediaReference? featuredMedia,
+        DateTimeOffset changedAt)
+    {
+        ArgumentNullException.ThrowIfNull(title);
+
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateTitle(title);
+        ValidateOptionalMaximumLength(
+            summary,
+            MaximumSummaryLength,
+            nameof(summary),
+            "Blog summary");
+
+        Title = title;
+        Summary = summary;
+        FeaturedMedia = featuredMedia;
+        UpdatedAt = changedAt;
+    }
+
+    public void AutosaveBody(
+        ContentBlockCollection blocks,
+        DateTimeOffset changedAt)
+    {
+        ArgumentNullException.ThrowIfNull(blocks);
+
+        EnsureCanEdit(changedAt, nameof(changedAt));
+
+        Blocks = blocks;
+        UpdatedAt = changedAt;
+    }
+
+    public BlogRevision SaveBody(
+        ContentBlockCollection blocks,
+        DateTimeOffset savedAt)
+    {
+        ArgumentNullException.ThrowIfNull(blocks);
+
+        EnsureCanEdit(savedAt, nameof(savedAt));
+
+        var revision = BlogRevision.Create(
+            Id,
+            blocks,
+            BlogRevisionCause.ManualSave,
+            savedAt);
+
+        Blocks = blocks;
+        UpdatedAt = savedAt;
+
+        return revision;
+    }
+
+    public BlogRevision Save(DateTimeOffset savedAt)
+    {
+        EnsureCanEdit(savedAt, nameof(savedAt));
+
+        var revision = CreateRevision(
+            BlogRevisionCause.ManualSave,
+            savedAt);
+
+        UpdatedAt = savedAt;
+
+        return revision;
+    }
+
+    public BlogRevision Rollback(
+        BlogRevision targetRevision,
+        DateTimeOffset rolledBackAt)
+    {
+        ArgumentNullException.ThrowIfNull(targetRevision);
+
+        EnsureCanEdit(rolledBackAt, nameof(rolledBackAt));
+
+        if (targetRevision.BlogId != Id)
+        {
+            throw new ArgumentException(
+                "The target revision belongs to a different blog.",
+                nameof(targetRevision));
+        }
+
+        if (targetRevision.CreatedAt > rolledBackAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(rolledBackAt),
+                rolledBackAt,
+                "Rollback time cannot be earlier than the target revision time.");
+        }
+
+        var rollbackRevision = CreateRevision(
+            BlogRevisionCause.Rollback,
+            rolledBackAt);
+
+        Blocks = targetRevision.Blocks;
+        UpdatedAt = rolledBackAt;
+
+        return rollbackRevision;
+    }
+
+    public void ChangeVisibility(
+        ContentVisibility visibility,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateVisibility(visibility);
+
+        Visibility = visibility;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeTaxonomy(
+        CategoryIdentity? categoryId,
+        IEnumerable<BlogTagIdentity> tagIds,
+        DateTimeOffset changedAt)
+    {
+        ArgumentNullException.ThrowIfNull(tagIds);
+
+        EnsureCanEdit(changedAt, nameof(changedAt));
+
+        var copiedTagIds = CopyTagIds(tagIds);
+
+        CategoryId = categoryId;
+        _tagIds = copiedTagIds;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeDiscussion(
+        bool commentsAllowed,
+        CommenterPolicy commenterPolicy,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateCommenterPolicy(commenterPolicy);
+
+        CommentsAllowed = commentsAllowed;
+        CommenterPolicy = commenterPolicy;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangePlacement(
+        bool pinned,
+        bool featured,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+
+        Pinned = pinned;
+        Featured = featured;
+        UpdatedAt = changedAt;
+    }
+
+    public void UpdateSearchMetadata(
+        string? seoTitle,
+        string? seoDescription,
+        string? canonicalUrl,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateOptionalMaximumLength(
+            seoTitle,
+            MaximumSeoTitleLength,
+            nameof(seoTitle),
+            "SEO title");
+        ValidateOptionalMaximumLength(
+            seoDescription,
+            MaximumSeoDescriptionLength,
+            nameof(seoDescription),
+            "SEO description");
+
+        SeoTitle = seoTitle;
+        SeoDescription = seoDescription;
+        CanonicalUrl = canonicalUrl;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeCoAuthors(
+        IEnumerable<CoAuthor> coAuthors,
+        DateTimeOffset changedAt)
+    {
+        ArgumentNullException.ThrowIfNull(coAuthors);
+
+        EnsureCanEdit(changedAt, nameof(changedAt));
+
+        var copiedCoAuthors = CopyCoAuthors(coAuthors);
+
+        _coAuthors = copiedCoAuthors;
+        UpdatedAt = changedAt;
+    }
+
     public void Schedule(DateTimeOffset scheduledAt, DateTimeOffset changedAt)
     {
         EnsureCanChangePublication(changedAt, nameof(changedAt));
@@ -282,22 +472,36 @@ public sealed class Blog
         UpdatedAt = changedAt;
     }
 
-    public void Approve(DateTimeOffset publishedAt)
+    public BlogRevision Approve(DateTimeOffset publishedAt)
     {
         EnsureCanChangePublication(publishedAt, nameof(publishedAt));
         ValidateTitle(Title);
 
-        Publication = Publication.Approve(publishedAt);
+        var publication = Publication.Approve(publishedAt);
+        var revision = CreateRevision(
+            BlogRevisionCause.Publish,
+            publishedAt);
+
+        Publication = publication;
         UpdatedAt = publishedAt;
+
+        return revision;
     }
 
-    public void PublishScheduled(DateTimeOffset publishedAt)
+    public BlogRevision PublishScheduled(DateTimeOffset publishedAt)
     {
         EnsureCanChangePublication(publishedAt, nameof(publishedAt));
         ValidateTitle(Title);
 
-        Publication = Publication.PublishScheduled(publishedAt);
+        var publication = Publication.PublishScheduled(publishedAt);
+        var revision = CreateRevision(
+            BlogRevisionCause.Publish,
+            publishedAt);
+
+        Publication = publication;
         UpdatedAt = publishedAt;
+
+        return revision;
     }
 
     public void ReturnToDraft(DateTimeOffset changedAt)
@@ -367,6 +571,22 @@ public sealed class Blog
 
     public bool IsReadyForPurgeAt(DateTimeOffset timestamp) =>
         Deletion?.IsReadyForPurgeAt(timestamp) ?? false;
+
+    private BlogRevision CreateRevision(
+        BlogRevisionCause cause,
+        DateTimeOffset createdAt) =>
+        BlogRevision.Create(Id, Blocks, cause, createdAt);
+
+    private void EnsureCanEdit(DateTimeOffset changedAt, string parameterName)
+    {
+        if (Deletion is not null)
+        {
+            throw new InvalidOperationException(
+                "A deleted blog cannot be edited.");
+        }
+
+        EnsureMutationTime(changedAt, parameterName);
+    }
 
     private void EnsureCanChangePublication(
         DateTimeOffset changedAt,

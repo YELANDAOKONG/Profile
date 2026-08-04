@@ -15,10 +15,77 @@ public sealed class AccountIdentityTests
         var changedAt = _createdAt.AddMinutes(1);
         var stringId = new StringIdentity("new.account");
 
-        account.ChangeStringId(stringId, changedAt);
+        var reservation = account.ChangeStringId(stringId, changedAt);
 
         Assert.Equal(stringId, account.StringId);
         Assert.Equal(changedAt, account.UpdatedAt);
+        Assert.NotNull(reservation);
+        Assert.Equal(new StringIdentity("account.name"), reservation.StringId);
+        Assert.Equal(account.Id, reservation.PreviousOwnerId);
+        Assert.Equal(changedAt, reservation.ReservedAt);
+        Assert.Equal(
+            changedAt.AddDays(StringIdentityReservation.DefaultReservationPeriodDays),
+            reservation.ReleasesAt);
+    }
+
+    [Fact]
+    public void ChangeStringId_WithCustomPeriod_FixesReservationReleaseTime()
+    {
+        const int reservationPeriodDays = 45;
+
+        var account = CreateAccount();
+        var changedAt = _createdAt.AddMinutes(1);
+        var period = TimeSpan.FromDays(reservationPeriodDays);
+
+        var reservation = account.ChangeStringId(
+            new StringIdentity("new.account"),
+            changedAt,
+            period);
+
+        Assert.Equal(changedAt.Add(period), reservation?.ReleasesAt);
+    }
+
+    [Fact]
+    public void ChangeStringId_WithCasingOnlyChange_DoesNotCreateReservation()
+    {
+        var account = CreateAccount();
+        var changedAt = _createdAt.AddMinutes(1);
+
+        var reservation = account.ChangeStringId(
+            new StringIdentity("ACCOUNT.NAME"),
+            changedAt);
+
+        Assert.Null(reservation);
+        Assert.Equal("ACCOUNT.NAME", account.StringId.Value);
+        Assert.Equal(changedAt, account.UpdatedAt);
+    }
+
+    [Fact]
+    public void ChangeStringId_WithExactCurrentValue_DoesNotCreateReservationOrUpdateTime()
+    {
+        var account = CreateAccount();
+
+        var reservation = account.ChangeStringId(
+            new StringIdentity("account.name"),
+            _createdAt.AddMinutes(1));
+
+        Assert.Null(reservation);
+        Assert.Equal(_createdAt, account.UpdatedAt);
+    }
+
+    [Fact]
+    public void ChangeStringId_WithNonPositiveReservationPeriod_DoesNotChangeAccount()
+    {
+        var account = CreateAccount();
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => account.ChangeStringId(
+                new StringIdentity("new.account"),
+                _createdAt.AddMinutes(1),
+                TimeSpan.Zero));
+
+        Assert.Equal(new StringIdentity("account.name"), account.StringId);
+        Assert.Equal(_createdAt, account.UpdatedAt);
     }
 
     [Fact]
