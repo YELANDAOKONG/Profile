@@ -71,8 +71,14 @@ Login-input parsing belongs to the HTTP/controller boundary:
 - Preserve the selected casing for display, but perform availability checks,
   uniqueness enforcement, and login lookup case-insensitively.
 - After a change, only the new value may be used to log in.
-- Retain the old value for a configurable reservation period whose default is
-  90 days.
+- A casing-only change updates the displayed form and does not reserve the
+  previous casing as a separate identity.
+- Retain a substantively changed old value for a configurable reservation
+  period whose default is 90 days. The release time is fixed when the change
+  occurs; later configuration changes do not affect an existing reservation.
+- While reserved, the old value is unavailable to every account, including its
+  previous owner. When the reservation expires, any account may claim it
+  through the normal availability process.
 
 Email rules:
 
@@ -83,9 +89,12 @@ Email rules:
 - Preserve the address while comparing and normalizing it case-insensitively.
 - Store verification information for the current address.
 
-When a user is deleted, permanently retain its `UserId`, StringId identity
-records, and email identity records. Do not recycle identity data belonging to
-a deleted account.
+When a user is permanently deleted, permanently retain its `UserId`, StringId
+identity records, and email identity records. Permanently lock only the
+StringId that the account currently uses at deletion time. Existing
+reservations for its historical StringIds keep their previously fixed release
+times and are released normally; retaining their records does not keep those
+values unavailable after release.
 
 ## Account Roles and Administrative Scope
 

@@ -86,8 +86,13 @@ as domain structures:
   forbidden; `_` may appear consecutively and at either end; chosen case
   is preserved for display, but availability checks, uniqueness, and login
   lookups are case-insensitive; after a change, only the new value can be
-  used to log in, and the old value is reserved for a configurable
-  grace period (default 90 days).
+  used to log in. A casing-only change only updates the displayed form and
+  does not create a reservation. A substantively changed old value is
+  unavailable to every account, including its previous owner, for a
+  configurable grace period (default 90 days). Its release time is fixed
+  when the change occurs; later configuration changes do not affect it.
+  After release, any account may claim the value through the normal
+  availability process.
 - Login input parsing occurs only at the HTTP boundary: `#<guid>` selects
   UserId, `@<stringId>` selects StringId, no prefix defaults to StringId;
   `@` and `#` are pure input prefixes and never appear in domain values,
@@ -112,9 +117,13 @@ as domain structures:
   visible during the recovery period; the account can log in but may only
   perform recovery; permanent deletion may occur after the deadline;
   permanent deletion still permanently retains UserId, StringId identity
-  records, and email identity records.
-  Rationale: Identity records are never reclaimed, preventing old
-  identities from being reoccupied by others.
+  records, and email identity records. At permanent deletion, only the
+  account's current StringId is permanently locked. Existing reservations
+  for historical StringIds keep their fixed release times and release
+  normally; their retained records do not block later claims.
+  Rationale: The current identity cannot be impersonated after deletion,
+  while a later deletion does not retroactively prevent reuse of historical
+  identities whose release was already promised.
 - Content disposition on permanent deletion is chosen by the user when
   requesting deletion:
   (a) Content retained, author displayed as "Deactivated account"
@@ -424,6 +433,20 @@ Blog
   working copy.
   Rationale: Autosave triggers frequently; generating a revision on each
   would drown out truly meaningful history.
+- A Blog revision is an independent immutable record rather than a
+  collection inside the Blog aggregate. It contains a strongly typed
+  revision identity, the owning Blog identity, an ordered content-block
+  snapshot, creation time, and a cause: manual save, publish, or rollback.
+  It snapshots only the body blocks; title, summary, taxonomy, visibility,
+  SEO fields, and other metadata are not revisioned.
+- Explicit save and publish create a revision even when the body equals the
+  latest revision, because the revision also records the explicit action.
+  Publish revisions are created by approval and scheduled auto-publication;
+  submitting for review, unscheduling, returning to draft, and unpublishing
+  do not create revisions.
+- Rolling back first creates a rollback revision containing the current body,
+  then replaces the working body with the selected historical snapshot. It
+  does not duplicate the selected target revision.
 - Published content is edited in place, taking effect immediately, while
   simultaneously recording a revision.
   Rationale: The user confirmed full revision history + in-place effect;
