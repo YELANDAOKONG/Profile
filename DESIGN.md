@@ -477,6 +477,8 @@ Post
   Body: ContentBody?           // ≤8192
   Media: read-only MediaReference collection  // image+video+audio, ≤9
   Visibility: ContentVisibility
+  AudienceRestrictionMode: Blacklist / Whitelist
+  AudienceAccounts: UserIdentity collection (≤2048)
   QuotedPostId: PostIdentity?
   CommentsAllowed: bool
   CommenterPolicy: CommenterPolicy
@@ -491,6 +493,14 @@ Post
 - Publish invariants: at least one of body or media. Quoting does not
   provide an exemption — a quote post must also carry its own body or
   media (user ruling, bare quotes withdrawn).
+- Audience restrictions are an optional account set overlaid on top of the
+  visibility enum. `Blacklist` first determines the audience from visibility
+  and then subtracts the listed accounts. `Whitelist` intersects the
+  visibility audience with the listed accounts. Neither mode can expand the
+  audience granted by the visibility enum.
+- An empty account set has no effect in `Blacklist` mode and produces an empty
+  audience in `Whitelist` mode. The account set contains at most 2048 unique
+  `UserIdentity` values.
 - Repost is modeled as an independent relationship `PostRepost`, not a
   special Post containing copied body; reposting one's own Post is
   allowed; the same account may repost the same Post multiple times.

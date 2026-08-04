@@ -371,6 +371,8 @@ Post
   Body: ContentBody?           // ≤8192
   Media: 只读 MediaReference 集合  // 图片+视频+音频，≤9
   Visibility: ContentVisibility
+  AudienceRestrictionMode: Blacklist / Whitelist
+  AudienceAccounts: UserIdentity 集合 (≤2048)
   QuotedPostId: PostIdentity?
   CommentsAllowed: bool
   CommenterPolicy: CommenterPolicy
@@ -383,6 +385,11 @@ Post
 - 草稿不变量：正文与媒体至少其一（不允许完全空的草稿）。
 - 发布不变量：正文与媒体至少其一。引用不豁免——引用帖也必须自带正
   文或媒体（用户裁决，撤回裸引用）。
+- 受众限制是叠加在可见性枚举之上的可选账户集合。`Blacklist` 模式先按
+  可见性确定受众，再从中排除指定账户；`Whitelist` 模式将可见性受众与
+  指定账户取交集。两种模式都不能扩大可见性枚举授予的受众范围。
+- 黑名单模式下空账户集合不产生限制；白名单模式下空账户集合产生空受众。
+  账户集合最多包含 2048 个不重复的 `UserIdentity`。
 - 纯转发（Repost）建模为独立关系 `PostRepost`，不是含复制正文的特
   殊 Post；可转发自己的 Post；同一账户可多次转发同一 Post。
 - 引用（Quote）是一条新 Post：自带正文/媒体 + `QuotedPostId`；
