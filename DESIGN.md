@@ -801,18 +801,49 @@ PostBookmark / PostBookmarkFolder
   global taxonomy; each has a stable identity (globally unique Guid) so
   that renaming does not break content associations; internal associations
   always use Guids.
-- Route identifiers: user-specified text identifiers, mutable, unique per
-  account; display name and route identifier are separate, and neither
-  enters internal associations.
-- Name: ≤64, unique per account, case-sensitive.
+- Category, BlogTag, PostTag, and MomentTag form four independent taxonomy
+  namespaces. Name and route uniqueness are coordinated per account within
+  each namespace, so the same account may reuse a name or route in a different
+  namespace. Public routing must include the taxonomy kind so those namespaces
+  remain distinguishable.
+- Route identifiers are mutable user-specified values containing 1–128 ASCII
+  letters, digits, or `-`; they must start and end with a letter or digit, and
+  consecutive `-` characters are forbidden. Selected casing is preserved,
+  while a lowercase normalized value is used for uniqueness and lookup.
+  Display name and route identifier are separate, and neither enters internal
+  associations. Domains and route prefixes are likewise excluded from the
+  route value, allowing future verified custom domains to expose the same
+  taxonomy identity without changing it.
+- A substantive route change creates an independent strongly typed route
+  reservation in the same taxonomy namespace. Its configurable reservation
+  period defaults to 90 days and its release time is fixed when created. While
+  active, the old route is unavailable to every taxonomy aggregate in that
+  namespace, including its original aggregate, and resolves with a 301 when
+  the target archive remains publicly routable. A casing-only change updates
+  display casing without creating a reservation.
+- Category and Tag deletion is immediate rather than recoverable. Application
+  removes all content associations and the taxonomy aggregate in one
+  transaction. The current route is released immediately; existing historical
+  route reservations retain their fixed release times and expire normally.
+- Name is required, non-blank, contains no surrounding whitespace, is
+  preserved exactly, and is ≤64. It is unique per account within its namespace
+  and case-sensitive.
 - Categories: flat (no hierarchy); a Blog may have at most one category,
   which is optional; categories per account ≤2048.
 - Tags: Blog / Post / Moment each use an independent tag namespace
-  (BlogTag / PostTag / MomentTag); tags per account ≤8192; tags per
-  content item ≤32.
-- Tag additional metadata: description (≤1024), cover media (media library
-  reference), SEO metadata (SEO title ≤128 / SEO description ≤512),
-  display order (manually sortable).
+  (BlogTag / PostTag / MomentTag); each namespace allows ≤8192 tags per
+  account; tags per content item ≤32.
+- Category and Tag presentation metadata is identical: optional description
+  (≤1024), optional cover media reference, optional SEO title (≤128), optional
+  SEO description (≤512), and non-negative `long` display order for manual
+  sorting. `null` represents absent optional text; present text must be
+  non-blank and contain no surrounding whitespace. Application verifies that
+  a cover references an image owned by the taxonomy owner. Created/updated
+  times are retained, and mutation times cannot precede the current updated
+  time.
+- Assigning a Category or Tag to content requires both to have the same owner.
+  Application loads the taxonomy aggregate and enforces ownership before the
+  content aggregate stores only its strongly typed Guid.
 - Category / tag archive pages are read projections (§17).
 
 ## 15. Navigation Menus
@@ -879,8 +910,8 @@ decision:
 | SEO title | 128 characters |
 | SEO description | 512 characters |
 | Tag/Category name | 64 characters |
-| Tag description | 1024 characters |
-| Page route identifier | 128 characters |
+| Tag/Category description | 1024 characters |
+| Page/Taxonomy route identifier | 128 characters |
 | Nickname / Site title / Co-author text | 64 characters |
 | Bio | 2048 characters |
 | Site description | 1024 characters |
