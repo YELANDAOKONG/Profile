@@ -33,7 +33,8 @@ public sealed class Post
         Publication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(authorId);
@@ -53,6 +54,8 @@ public sealed class Post
         ValidateVisibility(visibility);
         ValidateAudienceRestrictionMode(audienceRestrictionMode);
         ValidateCommenterPolicy(commenterPolicy);
+        ValidateCommentModerationPolicyOverride(
+            commentModerationPolicyOverride);
 
         var copiedMedia = CopyMedia(media);
         var copiedAudienceAccountIds = CopyAudienceAccountIds(
@@ -96,6 +99,7 @@ public sealed class Post
         QuotedPostId = quotedPostId;
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        CommentModerationPolicyOverride = commentModerationPolicyOverride;
         _tagIds = copiedTagIds;
         Publication = publication;
         Deletion = deletion;
@@ -123,6 +127,12 @@ public sealed class Post
     public bool CommentsAllowed { get; private set; }
 
     public CommenterPolicy CommenterPolicy { get; private set; }
+
+    public CommentModerationPolicy? CommentModerationPolicyOverride
+    {
+        get;
+        private set;
+    }
 
     public IReadOnlyList<PostTagIdentity> TagIds => _tagIds;
 
@@ -152,7 +162,8 @@ public sealed class Post
         bool commentsAllowed,
         CommenterPolicy commenterPolicy,
         IEnumerable<PostTagIdentity> tagIds,
-        DateTimeOffset createdAt) =>
+        DateTimeOffset createdAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -168,7 +179,8 @@ public sealed class Post
             Publication.CreateDraft(),
             null,
             createdAt,
-            createdAt);
+            createdAt,
+            commentModerationPolicyOverride);
 
     public static Post CreateQuote(
         PostIdentity id,
@@ -183,7 +195,8 @@ public sealed class Post
         bool commentsAllowed,
         CommenterPolicy commenterPolicy,
         IEnumerable<PostTagIdentity> tagIds,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null)
     {
         ArgumentNullException.ThrowIfNull(quotedPost);
 
@@ -206,7 +219,8 @@ public sealed class Post
             Publication.CreateDraft(),
             null,
             createdAt,
-            createdAt);
+            createdAt,
+            commentModerationPolicyOverride);
     }
 
     public static Post Reconstitute(
@@ -224,7 +238,8 @@ public sealed class Post
         Publication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -240,7 +255,8 @@ public sealed class Post
             publication,
             deletion,
             createdAt,
-            updatedAt);
+            updatedAt,
+            commentModerationPolicyOverride);
 
     public void UpdateContent(
         ContentBody? body,
@@ -301,6 +317,17 @@ public sealed class Post
 
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanChangeSettings(changedAt, nameof(changedAt));
+        ValidateCommentModerationPolicyOverride(policy);
+
+        CommentModerationPolicyOverride = policy;
         UpdatedAt = changedAt;
     }
 
@@ -665,6 +692,18 @@ public sealed class Post
                 nameof(commenterPolicy),
                 commenterPolicy,
                 "Commenter policy is not supported.");
+        }
+    }
+
+    private static void ValidateCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy)
+    {
+        if (policy is not null && !Enum.IsDefined(policy.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(policy),
+                policy,
+                "Comment moderation policy is not supported.");
         }
     }
 

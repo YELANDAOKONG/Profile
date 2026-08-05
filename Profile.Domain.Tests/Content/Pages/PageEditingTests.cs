@@ -15,6 +15,27 @@ public sealed class PageEditingTests
         new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public void ChangeCommentModerationPolicyOverride_SetsAndClearsOverride()
+    {
+        var page = CreatePage();
+
+        page.ChangeCommentModerationPolicyOverride(
+            CommentModerationPolicy.AllComments,
+            _baseTime.AddMinutes(1));
+
+        Assert.Equal(
+            CommentModerationPolicy.AllComments,
+            page.CommentModerationPolicyOverride);
+
+        page.ChangeCommentModerationPolicyOverride(
+            null,
+            _baseTime.AddMinutes(2));
+
+        Assert.Null(page.CommentModerationPolicyOverride);
+        Assert.Equal(_baseTime.AddMinutes(2), page.UpdatedAt);
+    }
+
+    [Fact]
     public void ChangeRouteIdentifier_WithDifferentValue_ReturnsReservation()
     {
         var page = CreatePage();

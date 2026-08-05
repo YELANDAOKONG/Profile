@@ -27,7 +27,8 @@ public sealed class Page
         PagePublication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(authorId);
@@ -39,6 +40,8 @@ public sealed class Page
         ValidateTitle(title);
         ValidateVisibility(visibility);
         ValidateCommenterPolicy(commenterPolicy);
+        ValidateCommentModerationPolicyOverride(
+            commentModerationPolicyOverride);
         ValidateOptionalMaximumLength(
             seoTitle,
             MaximumSeoTitleLength,
@@ -82,6 +85,7 @@ public sealed class Page
         Visibility = visibility;
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        CommentModerationPolicyOverride = commentModerationPolicyOverride;
         SeoTitle = seoTitle;
         SeoDescription = seoDescription;
         FeaturedMedia = featuredMedia;
@@ -106,6 +110,12 @@ public sealed class Page
     public bool CommentsAllowed { get; private set; }
 
     public CommenterPolicy CommenterPolicy { get; private set; }
+
+    public CommentModerationPolicy? CommentModerationPolicyOverride
+    {
+        get;
+        private set;
+    }
 
     public string? SeoTitle { get; private set; }
 
@@ -133,7 +143,8 @@ public sealed class Page
         string? seoTitle,
         string? seoDescription,
         MediaReference? featuredMedia,
-        DateTimeOffset createdAt) =>
+        DateTimeOffset createdAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -149,7 +160,8 @@ public sealed class Page
             PagePublication.CreateDraft(),
             null,
             createdAt,
-            createdAt);
+            createdAt,
+            commentModerationPolicyOverride);
 
     public static Page Reconstitute(
         PageIdentity id,
@@ -166,7 +178,8 @@ public sealed class Page
         PagePublication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -182,7 +195,8 @@ public sealed class Page
             publication,
             deletion,
             createdAt,
-            updatedAt);
+            updatedAt,
+            commentModerationPolicyOverride);
 
     public PageRouteReservation? ChangeRouteIdentifier(
         PageRouteIdentifier routeIdentifier,
@@ -277,6 +291,17 @@ public sealed class Page
 
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateCommentModerationPolicyOverride(policy);
+
+        CommentModerationPolicyOverride = policy;
         UpdatedAt = changedAt;
     }
 
@@ -446,6 +471,18 @@ public sealed class Page
                 nameof(commenterPolicy),
                 commenterPolicy,
                 "Commenter policy is not supported.");
+        }
+    }
+
+    private static void ValidateCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy)
+    {
+        if (policy is not null && !Enum.IsDefined(policy.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(policy),
+                policy,
+                "Comment moderation policy is not supported.");
         }
     }
 

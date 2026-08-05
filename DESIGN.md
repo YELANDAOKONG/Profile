@@ -678,17 +678,35 @@ Moment
   Rationale: Commenters are system accounts because the "first-time
   commenter per account requires moderation" policy needs stable
   identification of commenters.
+- The body is required and must contain at least one non-whitespace character;
+  media cannot replace it. The source is otherwise preserved exactly. Media
+  identities must be unique within one comment even when reference-specific
+  alt text differs. The comment aggregate enforces collection shape and the
+  four-item limit; Application validates image type and ownership by loading
+  the referenced media records.
 - Capabilities: Markdown, media, likes; not editable.
 - State machine: `Pending` / `Approved` / `Spam` / `Deleted`; `Deleted` is
-  not recoverable and only retains a placeholder record to maintain
-  nesting tree structure.
+  not recoverable and only retains identity, author, host, parent, status, and
+  creation time as a placeholder to maintain nesting tree structure; deletion
+  clears body and media. Legal transitions are `Pending → Approved / Spam /
+  Deleted`, `Approved → Spam / Deleted`, and `Spam → Approved / Deleted`.
+  `Deleted` is terminal.
   Rationale: Under unlimited nesting depth, hard-deletion would destroy the
   context of child comments.
+- Replies require a parent from the same host. Approved and Deleted
+  placeholder comments may receive replies; Pending and Spam comments may
+  not. Parent references are immutable, and creating a self-parent reference
+  is forbidden. Existing-parent creation makes cycles impossible while still
+  allowing unlimited depth.
 - Moderation policy (choose one): no moderation required / first comment
   per commenter requires moderation (once approved, subsequent comments
   from that commenter appear directly) / all comments require moderation.
   Configuration hierarchy: site-level default (`AccountSite`) + per
-  content item override.
+  content item nullable override (`null` inherits the site default). Under
+  `None`, a new comment starts Approved; under `FirstComment`, Application
+  supplies whether this account already has an approved comment and the new
+  comment starts Pending only when it does not; under `AllComments`, every new
+  comment starts Pending.
 - Each content item may turn off comments (`CommentsAllowed=false` means
   no one can comment, including the author); each content item may set a
   commenter scope (`CommenterPolicy`): all readers / followers only /
@@ -696,6 +714,11 @@ Moment
   Rationale: The user chose tighter comment control than read permissions;
   the two-level control (toggle + scope) are not substitutes for each
   other.
+- A commenter must also be in the host's current reading audience and must not
+  be blocked in either direction. The content author may comment under every
+  commenter scope when comments are enabled; disabling comments also excludes
+  the author. Application resolves host visibility and relationship facts,
+  while the Domain comment audience policy enforces this rule.
 - Comment count is a read projection; comments are not stored inside the
   host aggregate.
 

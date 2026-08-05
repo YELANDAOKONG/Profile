@@ -167,11 +167,32 @@ public sealed class MomentEditingTests
         Assert.Equal(MomentTestFactory.BaseTime, moment.UpdatedAt);
     }
 
+    [Fact]
+    public void ChangeCommentModerationPolicyOverride_SetsAndClearsOverride()
+    {
+        var moment = MomentTestFactory.CreateMoment();
+
+        moment.ChangeCommentModerationPolicyOverride(
+            CommentModerationPolicy.AllComments,
+            MomentTestFactory.BaseTime.AddMinutes(1));
+
+        Assert.Equal(
+            CommentModerationPolicy.AllComments,
+            moment.CommentModerationPolicyOverride);
+
+        moment.ChangeCommentModerationPolicyOverride(
+            null,
+            MomentTestFactory.BaseTime.AddMinutes(2));
+
+        Assert.Null(moment.CommentModerationPolicyOverride);
+    }
+
     [Theory]
     [InlineData(nameof(Moment.UpdateContent))]
     [InlineData(nameof(Moment.ChangeVisibility))]
     [InlineData(nameof(Moment.ChangeAudienceRestriction))]
     [InlineData(nameof(Moment.ChangeDiscussion))]
+    [InlineData(nameof(Moment.ChangeCommentModerationPolicyOverride))]
     [InlineData(nameof(Moment.ChangeTags))]
     public void ChangeOperation_WhenDeleted_ThrowsInvalidOperationException(
         string operation)
@@ -190,6 +211,7 @@ public sealed class MomentEditingTests
     [InlineData(nameof(Moment.ChangeVisibility))]
     [InlineData(nameof(Moment.ChangeAudienceRestriction))]
     [InlineData(nameof(Moment.ChangeDiscussion))]
+    [InlineData(nameof(Moment.ChangeCommentModerationPolicyOverride))]
     [InlineData(nameof(Moment.ChangeTags))]
     public void ChangeOperation_WithEarlierTime_ThrowsArgumentOutOfRangeException(
         string operation)
@@ -236,6 +258,11 @@ public sealed class MomentEditingTests
                 break;
             case nameof(Moment.ChangeDiscussion):
                 moment.ChangeDiscussion(false, CommenterPolicy.AuthorOnly, changedAt);
+                break;
+            case nameof(Moment.ChangeCommentModerationPolicyOverride):
+                moment.ChangeCommentModerationPolicyOverride(
+                    CommentModerationPolicy.AllComments,
+                    changedAt);
                 break;
             case nameof(Moment.ChangeTags):
                 moment.ChangeTags([MomentTagIdentity.New()], changedAt);

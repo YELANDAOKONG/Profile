@@ -157,11 +157,32 @@ public sealed class PostEditingTests
         Assert.Equal(PostTestFactory.BaseTime, post.UpdatedAt);
     }
 
+    [Fact]
+    public void ChangeCommentModerationPolicyOverride_SetsAndClearsOverride()
+    {
+        var post = PostTestFactory.CreatePost();
+
+        post.ChangeCommentModerationPolicyOverride(
+            CommentModerationPolicy.AllComments,
+            PostTestFactory.BaseTime.AddMinutes(1));
+
+        Assert.Equal(
+            CommentModerationPolicy.AllComments,
+            post.CommentModerationPolicyOverride);
+
+        post.ChangeCommentModerationPolicyOverride(
+            null,
+            PostTestFactory.BaseTime.AddMinutes(2));
+
+        Assert.Null(post.CommentModerationPolicyOverride);
+    }
+
     [Theory]
     [InlineData(nameof(Post.UpdateContent))]
     [InlineData(nameof(Post.ChangeVisibility))]
     [InlineData(nameof(Post.ChangeAudienceRestriction))]
     [InlineData(nameof(Post.ChangeDiscussion))]
+    [InlineData(nameof(Post.ChangeCommentModerationPolicyOverride))]
     [InlineData(nameof(Post.ChangeTags))]
     public void ChangeOperation_WhenDeleted_ThrowsInvalidOperationException(
         string operation)
@@ -180,6 +201,7 @@ public sealed class PostEditingTests
     [InlineData(nameof(Post.ChangeVisibility))]
     [InlineData(nameof(Post.ChangeAudienceRestriction))]
     [InlineData(nameof(Post.ChangeDiscussion))]
+    [InlineData(nameof(Post.ChangeCommentModerationPolicyOverride))]
     [InlineData(nameof(Post.ChangeTags))]
     public void ChangeOperation_WithEarlierTime_ThrowsArgumentOutOfRangeException(
         string operation)
@@ -222,6 +244,11 @@ public sealed class PostEditingTests
                 break;
             case nameof(Post.ChangeDiscussion):
                 post.ChangeDiscussion(false, CommenterPolicy.AuthorOnly, changedAt);
+                break;
+            case nameof(Post.ChangeCommentModerationPolicyOverride):
+                post.ChangeCommentModerationPolicyOverride(
+                    CommentModerationPolicy.AllComments,
+                    changedAt);
                 break;
             case nameof(Post.ChangeTags):
                 post.ChangeTags([PostTagIdentity.New()], changedAt);

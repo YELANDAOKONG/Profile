@@ -89,6 +89,27 @@ public sealed class BlogEditingTests
     }
 
     [Fact]
+    public void ChangeCommentModerationPolicyOverride_SetsAndClearsOverride()
+    {
+        var blog = CreateBlog();
+
+        blog.ChangeCommentModerationPolicyOverride(
+            CommentModerationPolicy.AllComments,
+            _baseTime.AddMinutes(1));
+
+        Assert.Equal(
+            CommentModerationPolicy.AllComments,
+            blog.CommentModerationPolicyOverride);
+
+        blog.ChangeCommentModerationPolicyOverride(
+            null,
+            _baseTime.AddMinutes(2));
+
+        Assert.Null(blog.CommentModerationPolicyOverride);
+        Assert.Equal(_baseTime.AddMinutes(2), blog.UpdatedAt);
+    }
+
+    [Fact]
     public void ChangeTaxonomy_CopiesTagSourceCollection()
     {
         var blog = CreateBlog();

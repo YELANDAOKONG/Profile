@@ -43,7 +43,8 @@ public sealed class Blog
         Publication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(authorId);
@@ -72,6 +73,8 @@ public sealed class Blog
             "SEO description");
         ValidateVisibility(visibility);
         ValidateCommenterPolicy(commenterPolicy);
+        ValidateCommentModerationPolicyOverride(
+            commentModerationPolicyOverride);
 
         if (updatedAt < createdAt)
         {
@@ -111,6 +114,7 @@ public sealed class Blog
         CategoryId = categoryId;
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        CommentModerationPolicyOverride = commentModerationPolicyOverride;
         Pinned = pinned;
         Featured = featured;
         SeoTitle = seoTitle;
@@ -145,6 +149,12 @@ public sealed class Blog
     public bool CommentsAllowed { get; private set; }
 
     public CommenterPolicy CommenterPolicy { get; private set; }
+
+    public CommentModerationPolicy? CommentModerationPolicyOverride
+    {
+        get;
+        private set;
+    }
 
     public bool Pinned { get; private set; }
 
@@ -185,7 +195,8 @@ public sealed class Blog
         string? seoDescription,
         string? canonicalUrl,
         IEnumerable<CoAuthor> coAuthors,
-        DateTimeOffset createdAt) =>
+        DateTimeOffset createdAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -208,7 +219,8 @@ public sealed class Blog
             Publication.CreateDraft(),
             null,
             createdAt,
-            createdAt);
+            createdAt,
+            commentModerationPolicyOverride);
 
     public static Blog Reconstitute(
         BlogIdentity id,
@@ -232,7 +244,8 @@ public sealed class Blog
         Publication publication,
         ContentDeletion? deletion,
         DateTimeOffset createdAt,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        CommentModerationPolicy? commentModerationPolicyOverride = null) =>
         new(
             id,
             authorId,
@@ -255,7 +268,8 @@ public sealed class Blog
             publication,
             deletion,
             createdAt,
-            updatedAt);
+            updatedAt,
+            commentModerationPolicyOverride);
 
     public void UpdateDetails(
         string title,
@@ -394,6 +408,17 @@ public sealed class Blog
 
         CommentsAllowed = commentsAllowed;
         CommenterPolicy = commenterPolicy;
+        UpdatedAt = changedAt;
+    }
+
+    public void ChangeCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy,
+        DateTimeOffset changedAt)
+    {
+        EnsureCanEdit(changedAt, nameof(changedAt));
+        ValidateCommentModerationPolicyOverride(policy);
+
+        CommentModerationPolicyOverride = policy;
         UpdatedAt = changedAt;
     }
 
@@ -726,6 +751,18 @@ public sealed class Blog
                 nameof(commenterPolicy),
                 commenterPolicy,
                 "Commenter policy is not supported.");
+        }
+    }
+
+    private static void ValidateCommentModerationPolicyOverride(
+        CommentModerationPolicy? policy)
+    {
+        if (policy is not null && !Enum.IsDefined(policy.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(policy),
+                policy,
+                "Comment moderation policy is not supported.");
         }
     }
 
