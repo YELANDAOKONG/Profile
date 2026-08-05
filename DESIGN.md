@@ -725,14 +725,31 @@ Moment
 ## 12. Likes
 
 - Independent like relationships: `BlogLike`, `PostLike`, `MomentLike`;
-  comment likes are independent relationships corresponding to the
-  comment aggregate.
+  comment likes are four independent relationships corresponding to the
+  comment aggregates: `BlogCommentLike`, `PostCommentLike`,
+  `MomentCommentLike`, and `PageCommentLike`. Page itself has no Like.
+- Each relationship contains the liker identity, its strongly typed target
+  identity, and `LikedAt`. It has no separate Guid identity: the composite
+  `(LikerId, TargetId)` is unique, so one account may like a target at most
+  once. Application and persistence coordinate this uniqueness. Liking one's
+  own content or comment is allowed.
+- Creating a content Like requires an active, published target in the liker's
+  current reading audience. Creating a comment Like additionally requires an
+  Approved comment and an active, published, readable host. A block in either
+  direction between the liker and target author rejects the operation. The
+  Application layer loads targets and supplies current state, audience, and
+  relationship facts to the Domain eligibility policy.
+- Unlike immediately removes the relationship; it is not a state transition
+  on the immutable Like value. Permanent target deletion cascades to remove
+  its Like relationships. A terminal comment deletion likewise removes its
+  comment Likes.
 - Liker identity is not public: everyone only sees the like count (only
   the count is public).
   Rationale: The user chose count-only publicity, so there is no need to
   filter a list of likers by visibility.
-- When soft-deleted content is restored, its likes are also restored
-  (§6.5).
+- Soft-deleting content retains its Like relationships but excludes them from
+  active counts and interaction output. Restoring the content makes those
+  relationships active again (§6.5).
 
 ## 13. Blog Favorites and Post Bookmarks
 
