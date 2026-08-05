@@ -762,17 +762,35 @@ PostBookmark / PostBookmarkFolder
 ```
 
 - Folders are private and visible only to their owner.
-- Folder name: unique per account, case-sensitive, ≤128; folders per
-  account ≤512.
+- Folder name: required, non-blank, without surrounding whitespace, preserved
+  exactly, and ≤128. It is unique per account and case-sensitive; folders per
+  account ≤512. Name uniqueness and the folder-count limit are coordinated by
+  Application.
 - "Uncategorized" is represented by a nullable folder identity; there is
   no special user-editable folder record for it; when a folder is deleted,
   its entries move to uncategorized.
-- Both folders and entries within folders support manual ordering.
+- A folder contains its strongly typed Guid identity, owner identity, name,
+  non-negative `long SortOrder`, and created/updated times. Deleting a folder
+  is immediate rather than recoverable: Application moves all its entries to
+  Uncategorized and then removes the folder in one transaction.
+- Favorite and Bookmark entries contain owner identity, strongly typed target
+  identity, nullable folder identity, non-negative `long SortOrder`, and
+  created/updated times. A referenced folder must have the same owner. Both
+  folders and entries within folders, including Uncategorized, support manual
+  ordering. Moving an entry specifies its target folder and new order
+  together; rename, move, and reorder times cannot precede `UpdatedAt`.
 - Favorite/bookmark uniqueness is determined per account (the same account
-  cannot favorite the same target more than once).
+  cannot favorite the same target more than once). Entries have no separate
+  Guid: `(OwnerId, TargetId)` is the composite unique identity enforced by
+  Application and persistence.
+- Creating an entry requires an active, published target in the owner's
+  current reading audience and no block in either direction. Saving one's own
+  content is allowed. Removing a Favorite or Bookmark immediately deletes the
+  relationship; it is not a state transition on the entry.
 - Deleted or inaccessible targets are displayed in the folder as
   "Unavailable Entry" and automatically restored when the content is
-  recovered.
+  recovered. Existing entries are retained when target visibility or access
+  changes; permanent target deletion cascades to remove them.
   Rationale: The user chose to retain placeholders rather than
   auto-remove, to avoid losing favorite organization when content is
   temporarily unavailable.
